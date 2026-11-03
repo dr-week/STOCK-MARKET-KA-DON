@@ -22,7 +22,7 @@
 
 ## About
 
-**Stock Market Ka Don (SMKD)** is developed by [Danger Labs](https://github.com/dr-week). The project brings together an NSE scanner, analysis tools, historical research, and local paper trading in one application.
+**Stock Market Ka Don (SMKD)** is developed by [Danger Labs](https://github.com/dr-week) for local analysis and research on NSE equities.
 
 ---
 
@@ -89,7 +89,7 @@ flowchart TD
     Fetcher --> Analysis --> API
     Analysis --> Paper --> Store
     Paper --> Research
-    News --> API
+    News --> Analysis
     Groww["Optional read-only Groww account/history"] --> API
     API --> UI
 ```
@@ -181,12 +181,16 @@ cd STOCK-MARKET-KA-DON
 ```
 
 #### Step 2: Start Quantitative Backend
-```bash
+In PowerShell, create an isolated Python environment and start the API:
+
+```powershell
 cd stock-signal-bot/backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --port 8000
 ```
-> The API will be available at `http://127.0.0.1:8000` with interactive Swagger docs at `http://127.0.0.1:8000/docs`.
+The API is available at `http://127.0.0.1:8000`; interactive Swagger docs are at `http://127.0.0.1:8000/docs`.
 
 #### Step 3: Start Reactive Client
 In a separate terminal:
