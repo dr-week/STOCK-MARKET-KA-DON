@@ -18,7 +18,7 @@
 
 ---
 
-> **Project status:** SMKD is an experimental NSE analysis dashboard, not a proven prediction system. Signal output uses deterministic rule scoring; market-data freshness is not guaranteed, and some UI paths can show sample rows when the API fails. See the [product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [documentation index](docs/INDEX.md) for current behavior and known gaps.
+> **Project status:** SMKD is an experimental NSE analysis and research dashboard, not a proven prediction system. Signals use hand-written rules, and Yahoo Finance data is not guaranteed real-time or exchange-verified. The active scanner shows loading, error, empty, and partial-result states instead of substituting sample rows when its API request fails. See the [product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) for verified behavior and remaining gaps.
 
 ## About
 
@@ -28,25 +28,9 @@
 
 ## Maintainers and contributions
 
-**Created and maintained by [Danger Labs](https://github.com/dr-week).**
+Maintained by [Danger Labs](https://github.com/dr-week). Report bugs and propose features in [GitHub Issues](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues); submit focused changes as [pull requests](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls). See [CONTRIBUTING.md](CONTRIBUTING.md), [developer docs](DOCS.md), and the [documentation index](docs/INDEX.md).
 
-SMKD is an evolving market-analysis and trading research project. Contributions, reproducible bug reports, test improvements, documentation fixes, and thoughtful feature proposals are welcome.
-
-- **Creator / maintainer:** [@dr-week](https://github.com/dr-week)
-- **Report a bug:** [Open an issue](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues/new)
-- **Suggest an improvement:** [Feature requests](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)
-- **Contribute code:** [Open a pull request](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls)
-- **Contribution guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Developer docs and research search:** [DOCS.md](DOCS.md) · [documentation index](docs/INDEX.md)
-
-### Useful links
-
-- [Issues and bug reports](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)
-- [Pull requests](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls)
-- [Contributor history](https://github.com/dr-week/STOCK-MARKET-KA-DON/graphs/contributors)
-- [Developer docs](DOCS.md) · [documentation index](docs/INDEX.md)
-
-For contributions, keep pull requests focused, include tests or reproducible steps for bug fixes, and never commit API keys, broker credentials, tokens, or personal data. Market-data changes must not introduce simulated data into live application paths. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Never commit API keys, broker credentials, tokens, or personal data. Market-data changes must not introduce simulated data into live application paths.
 
 ---
 
@@ -62,12 +46,13 @@ The scanner uses deterministic rules and third-party market data. It is not a va
 
 | Capability | What is implemented | Important limitation |
 |:---|:---|:---|
-| **Intraday stock scanner** | Deterministic scoring of configured NSE stocks from 5-minute OHLCV data using market structure, VWAP, EMA alignment, relative volume and momentum. | Experimental heuristic; provider timestamps and in-progress candles are not reliably validated. See [backend README](stock-signal-bot/README.md#the-active-intraday-scoring-model). |
-| **Technical analysis and risk levels** | RSI, EMA, VWAP, ATR, ADX/DI, volume, price-structure and zone calculations with candidate entry, stop and target levels. | Calculations are correlated inputs from the same feed; levels are not predictions or guarantees. |
-| **Market-data and research tools** | Candle normalization, local replay fixtures, history storage, feed-health diagnostics and a backtest that reuses production signal/risk logic. | Yahoo Finance availability/delay varies; backtest coverage and cost estimates are limited. |
-| **Paper trading and feedback** | Local paper-order ledger, position/P&L views, optional automation and feedback recording/summary endpoints. | Paper trades do not place real broker orders and do not establish live profitability. |
-| **News and broker links** | Keyword-tagged Google News RSS headlines and links that open external Groww stock pages. | News is not part of the active score; the app does not execute Groww orders or use a live Groww/NSE feed. |
-| **Web dashboard** | Vite frontend in `fast-framework/packages/stock-bot-ui`, built on the Zuari packages. | Some UI paths may show sample rows after API failure; do not treat them as live data. |
+| **Intraday stock scanner** | Deterministic analysis of configured NSE symbols using Yahoo Finance candle data, technical rules, and risk checks. | Yahoo is unofficial and may be delayed or unavailable; provider/fetch timestamps do not establish an exchange freshness guarantee. See the [signal-model notes](stock-signal-bot/README.md#the-active-intraday-scoring-model). |
+| **Indicators and chart** | RSI, EMA, VWAP, ATR, ADX/DI, relative volume, and a built-in SVG candlestick chart with indicator overlays, proposed levels, and local annotations. | Indicators share underlying OHLCV data; chart levels are proposals, not predictions or fills. |
+| **History and backtesting** | Local candle archive, feed-health checks, replay fixtures, and a short-window backtest using production signal/risk logic. | Provider history, point-in-time context, and modeled costs are limited; backtest results are research only. |
+| **Automatic paper trading** | A backend worker scans during NSE weekday hours and may record risk-gated virtual positions to a local SQLite ledger. The journal also supports manual paper entry and exit. | It runs only while the backend is running, uses simulated fills, and does not submit broker orders. P&L is gross and excludes fees/slippage. |
+| **Research feedback** | Closed paper outcomes can feed a local CPU training experiment and candidate report after minimum sample thresholds are met. | Research candidates are not loaded into production signals, do not edit code, and are not proof of a trading edge. |
+| **News and Groww** | Keyword-tagged Google News headlines; optional loopback-only, read-only Groww account/history view and external Groww links. | News sentiment is not part of the active score. Groww access requires the user's API account/approval; this app does not place Groww orders. |
+| **Web dashboard** | Vite frontend in `fast-framework/packages/stock-bot-ui`, built on the Zuari packages. | The active scanner renders loading, error, empty, and partial states; inspect source/provenance labels before relying on data. |
 
 ---
 
@@ -88,7 +73,9 @@ flowchart TD
         direction TB
         Fetcher["Fetch, normalize and validate candles"]
         Analysis["Technical analysis and deterministic scoring"]
-        Research["Backtesting, paper trading and feedback"]
+        Paper["Automatic paper worker + local journal"]
+        Research["Backtesting and feedback research"]
+        Store["Local SQLite ledgers"]
         API["FastAPI (/api)"]
     end
 
@@ -100,8 +87,10 @@ flowchart TD
     Yahoo --> Fetcher
     Replay --> Fetcher
     Fetcher --> Analysis --> API
-    Analysis --> Research
+    Analysis --> Paper --> Store
+    Paper --> Research
     News --> API
+    Groww["Optional read-only Groww account/history"] --> API
     API --> UI
 ```
 
@@ -129,7 +118,7 @@ flowchart TD
 
 The active scan uses a deterministic score with seven rule groups and 10 possible points: market structure (2), supply/demand or key-candle confirmation (2), price vs VWAP (2), EMA 9/21 alignment (1), relative volume (1), momentum (1), and Nifty 50 direction (1). BUY/SELL candidates require at least 7 points plus a risk/reward check. See the [full model description and limitations](stock-signal-bot/README.md#the-active-intraday-scoring-model).
 
-Daily data and other dashboard indicators may be displayed but do not necessarily contribute to the active intraday score. News sentiment is not included in the score. This model has not been calibrated to predict success and does not guarantee positive expectancy. Groww integration provides external links; it does not place orders.
+Daily data and chart-only indicators may be displayed but do not necessarily contribute to the active intraday score. News sentiment is not included in the score. The hand-authored rules have not been calibrated to predict success and do not establish positive expectancy. Groww account access is read-only; the app does not place broker orders.
 
 ---
 
@@ -155,7 +144,7 @@ The Tauri desktop window runs the dashboard and starts its local backend quietly
 
 The installer uses the Windows WebView2 runtime instead of bundling Chromium. The NSIS installer can download the small WebView2 bootstrapper if the runtime is missing. See [Tauri's Windows installer options](https://v2.tauri.app/distribute/windows-installer/) for runtime behavior.
 
-While the backend is open, its quiet worker scans on weekdays during NSE hours and records qualifying trades to a local SQLite paper ledger; it never places broker orders. A separate background trainer can save research candidates after enough labeled outcomes, but it does not change live signals. There is no Hermes coding agent installed in SMKD. See [paper-trade behavior and safeguards](docs/PAPER_TRADE_WORKFLOW.md) and [AI training boundaries](docs/AI_TRAINING_PIPELINE.md).
+When the backend is running, a quiet worker scans about once a minute on weekdays during NSE session hours. Automatic paper trading is enabled in the backend: qualifying, risk-gated signals can open virtual positions in a local SQLite ledger. This stops when the backend stops and never places broker orders. Closing paper trades can feed a CPU-based research candidate after documented outcome thresholds; the candidate does not change live signals or modify application code. Optional Groww account/history endpoints are read-only and loopback-only. See [paper-trade behavior](docs/PAPER_TRADE_WORKFLOW.md), [AI training boundaries](docs/AI_TRAINING_PIPELINE.md), and [Groww integration](docs/GROWW_READ_ONLY_INTEGRATION.md).
 
 For developers building the app, install Node.js 18+ and Rust with the MSVC C++ build tools, then run:
 
@@ -214,12 +203,17 @@ pnpm run dev
 
 | Endpoint | Method | Description |
 |:---|:---|:---|
-| `/api/overview` | `GET` | Dashboard overview and market summary. |
-| `/api/scan` | `GET` | Scan the configured stock universe. |
+| `/api/overview`, `/api/scan` | `GET` | Market overview and configured-universe scan. |
 | `/api/stock/{symbol}` | `GET` | Analysis for one symbol. |
-| `/api/backtest/{symbol}` | `GET` | Historical strategy simulation (research only). |
-| `/api/paper/positions`, `/api/paper/history`, `/api/paper/pnl` | `GET` | Paper-trading positions, history and P&L. |
-| `/docs` | `GET` | FastAPI interactive API documentation. |
+| `/api/backtest/{symbol}` | `GET` | Historical simulation; research only. |
+| `/api/paper/positions`, `/api/paper/history`, `/api/paper/pnl`, `/api/paper/automation` | `GET` | Paper ledger, gross summary, and automation status. |
+| `/api/paper/order`, `/api/paper/close/{id}` | `POST` | Record or close a virtual paper position; no broker order is sent. |
+| `/api/paper/automation` | `PUT` | Configure paper automation; disabling is rejected by the backend. |
+| `/api/groww/status`, `/api/groww/account`, `/api/groww/history/{symbol}` | `GET` | Optional loopback-only read access to connected Groww account/history data. |
+| `/api/groww/connect`, `/api/groww/disconnect` | `POST` | Connect or disconnect the local read-only Groww session. |
+| `/api/market-history/{symbol}` | `GET` | Local candle archive and supported history retrieval. |
+| `/api/feedback/learning`, `/api/system/feed-health/{symbol}` | `GET` | Research-candidate readiness and feed-health diagnostics. |
+| `/docs`, `/health` | `GET` | FastAPI interactive docs and local backend health. |
 
 For the full route list, use `/docs` while the backend is running; routes can change as the project evolves.
 
@@ -229,10 +223,10 @@ For the full route list, use `/docs` while the backend is running; routes can ch
 
 Active issues, architectural constraints, and enhancement roadmaps are tracked transparently in the **[GitHub Issues tab](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)**:
 
-1. **Third-Party Rate Limits**: Upstream Yahoo Finance / unofficial tick providers may enforce intermittent rate limits during high market volatility. Integration of official broker WebSocket APIs (Zerodha Kite Connect / Groww API) is planned.
-2. **Delayed Indian Feed on Free Endpoints**: Free upstream data tiers may experience a 1–2 minute delay. Production deployments should attach a paid low-latency market data feed.
-3. **Automated Order Placement Requires Broker Credentials**: Currently provides verified direct deep-links to Groww order tickets; automated non-supervised trade execution requires active TOTP broker authorization.
-4. **Execution Slippage**: Rapid gap openings between 9:15 AM and 9:20 AM may cause execution price variance from calculated entry prices.
+1. **Unofficial market data:** Yahoo Finance is not an exchange-certified real-time feed. Fresh fetch time does not prove quote freshness; stale/delayed classification and provider availability remain limitations.
+2. **Fallback context and fundamentals:** some market-context and company metrics use fixed/static defaults; review data-source labels and the roadmap before interpreting them as live observations.
+3. **Research limits:** short-window backtests use simplified assumptions and incomplete point-in-time context. They do not establish profitability or future performance.
+4. **Paper-only trading:** automatic paper positions are simulated locally. No broker order placement, real fills, fees, or slippage are modeled by the paper ledger.
 
 ---
 
