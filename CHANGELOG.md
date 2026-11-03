@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Historical market-data normalization and storage, with freshness and OHLCV integrity checks.
+- Expanded backtesting, paper-trading, and feedback components with focused test coverage.
 - Automated CI pipeline (`.github/workflows/ci.yml`) covering backend test suites and Zuari frontend verification.
 - Isolated live provider integration workflow (`.github/workflows/provider-integration.yml`) separating deterministic PR tests from live network dependencies.
 - Dependabot configuration (`.github/dependabot.yml`) for weekly dependency checks across GitHub Actions, pip, and npm.
