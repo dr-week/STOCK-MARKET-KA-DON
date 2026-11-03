@@ -1,37 +1,32 @@
 <div align="center">
+  <img src="desktop/tauri/logos/SMKD_LOGO.jpg" alt="SMKD green bull logo" width="220" />
 
-# ⚡ STOCK MARKET KA DON (SMKD)
-### Experimental market-analysis dashboard for Indian equities (NSE)
+  <h1>Stock Market Ka Don</h1>
+  <p><strong>SMKD · Market analysis and paper-trading research for Indian equities</strong></p>
+  <p>A local dashboard for stock scans, technical indicators, historical simulations, and paper-trading workflows.</p>
 
-[![Danger Labs](https://img.shields.io/badge/Engineered%20By-Danger%20Labs-ff0055?style=for-the-badge&logo=shield&logoColor=white)](#-designed--engineered-by-danger-labs)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Zuari Framework](https://img.shields.io/badge/Frontend-Zuari%20Zero--VDOM-6C5CE7?style=for-the-badge)](#-frontend-architecture)
-[![NSE India](https://img.shields.io/badge/Exchange-NSE%20India-FF6B6B?style=for-the-badge)](https://www.nseindia.com)
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-3acb82?style=flat-square" alt="MIT License" /></a>
+    <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11+" /></a>
+    <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/UI-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+    <a href="https://github.com/dr-week/STOCK-MARKET-KA-DON/graphs/contributors"><img src="https://img.shields.io/github/contributors/dr-week/STOCK-MARKET-KA-DON?style=flat-square" alt="Contributors" /></a>
+  </p>
 
-<p align="center">
-  <b>A local dashboard for exploring stock scans, technical indicators, historical simulations and paper-trading workflows.</b>
-</p>
-
-[Key Features](#-key-features) • [System Architecture](#-system-architecture) • [Trading Strategies](#-trading-engine--strategy-matrix) • [Quick Start](#-quick-start--installation) • [API Reference](#-api-specification) • [Limitations & Disclaimer](#-limitations--known-constraints)
-
----
-
+  <p><a href="#features">Features</a> · <a href="#quick-start">Quick start</a> · <a href="#windows-desktop-app">Windows app</a> · <a href="#api-reference">API</a> · <a href="#limitations">Limitations</a></p>
 </div>
 
-> **Verified implementation status (2026-11-03):** SMKD is an experimental NSE analysis dashboard, not a proven prediction system. Signal output uses deterministic rule scoring; market-data freshness is not guaranteed, and some UI paths can show sample rows when the API fails. The feature list below describes implemented capabilities and links to their limitations. See [the verified product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [documentation index](docs/INDEX.md) for current behavior and gaps.
+---
 
-## 🏢 Designed & Engineered by Danger Labs
+> **Project status:** SMKD is an experimental NSE analysis dashboard, not a proven prediction system. Signal output uses deterministic rule scoring; market-data freshness is not guaranteed, and some UI paths can show sample rows when the API fails. See the [product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [documentation index](docs/INDEX.md) for current behavior and known gaps.
 
-**Stock Market Ka Don (SMKD)** was architected and built by **Danger Labs**, an elite engineering research and quantitative trading systems lab. Danger Labs designs mission-critical algorithmic software, high-frequency signal pipelines, and low-latency reactive frontends.
+## About
 
-> *"Precision over hype. Mathematical expectancy over speculation."* — **Danger Labs Core Philosophy**
+**Stock Market Ka Don (SMKD)** is developed by [Danger Labs](https://github.com/dr-week). The project brings together an NSE scanner, analysis tools, historical research, and local paper trading in one application.
 
 ---
 
-## 👨‍💻 Creator, Maintainers & Contributors
+## Maintainers and contributions
 
 **Created and maintained by [Danger Labs](https://github.com/dr-week).**
 
@@ -44,36 +39,18 @@ SMKD is an evolving market-analysis and trading research project. Contributions,
 - **Contribution guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Developer docs and research search:** [DOCS.md](DOCS.md) · [documentation index](docs/INDEX.md)
 
-### Repository activity
+### Useful links
 
-[![Stars](https://img.shields.io/github/stars/dr-week/STOCK-MARKET-KA-DON?style=social)](https://github.com/dr-week/STOCK-MARKET-KA-DON/stargazers)
-[![Forks](https://img.shields.io/github/forks/dr-week/STOCK-MARKET-KA-DON?style=social)](https://github.com/dr-week/STOCK-MARKET-KA-DON/forks)
-[![Issues](https://img.shields.io/github/issues/dr-week/STOCK-MARKET-KA-DON)](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/dr-week/STOCK-MARKET-KA-DON)](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls)
-[![Last Commit](https://img.shields.io/github/last-commit/dr-week/STOCK-MARKET-KA-DON)](https://github.com/dr-week/STOCK-MARKET-KA-DON/commits/main)
+- [Issues and bug reports](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)
+- [Pull requests](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls)
+- [Contributor history](https://github.com/dr-week/STOCK-MARKET-KA-DON/graphs/contributors)
+- [Developer docs](DOCS.md) · [documentation index](docs/INDEX.md)
 
-### Meet the contributors
-
-Contributions are credited through GitHub's contributor history.
-
-[![Contributors](https://contrib.rocks/image?repo=dr-week/STOCK-MARKET-KA-DON)](https://github.com/dr-week/STOCK-MARKET-KA-DON/graphs/contributors)
-
-[View all contributors](https://github.com/dr-week/STOCK-MARKET-KA-DON/graphs/contributors) · [View commit history](https://github.com/dr-week/STOCK-MARKET-KA-DON/commits/main) · [View releases](https://github.com/dr-week/STOCK-MARKET-KA-DON/releases)
-
-### How to contribute
-
-1. Open or review an issue before starting a large change.
-2. Keep pull requests focused and explain the reason for the change.
-3. Include tests or reproducible steps when fixing a bug.
-4. Never commit API keys, broker credentials, tokens, or personal data.
-5. Do not introduce simulated market data into live application paths.
-6. Clearly state what you tested and what remains unverified.
-
-All market-data, signal-generation, and trading-related changes must preserve the project's safety and data-integrity requirements. See the [Issues](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues) and [Pull Requests](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls) pages before contributing.
+For contributions, keep pull requests focused, include tests or reproducible steps for bug fixes, and never commit API keys, broker credentials, tokens, or personal data. Market-data changes must not introduce simulated data into live application paths. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 📌 Executive Summary
+## Overview
 
 **SMKD** is an experimental stock-analysis dashboard. It combines a configured NSE stock scanner, technical indicators, estimated risk levels, market headlines, historical backtesting and paper-trading tools in a local web application.
 
@@ -81,7 +58,7 @@ The scanner uses deterministic rules and third-party market data. It is not a va
 
 ---
 
-## 🌟 Key Features
+## Features
 
 | Capability | What is implemented | Important limitation |
 |:---|:---|:---|
@@ -94,7 +71,7 @@ The scanner uses deterministic rules and third-party market data. It is not a va
 
 ---
 
-## 🏗️ System Architecture
+## Architecture
 
 The current data and presentation flow is:
 
@@ -128,7 +105,7 @@ flowchart TD
     API --> UI
 ```
 
-### Directory Structure
+### Repository layout
 
 ```text
 ├── fast-framework/             # Danger Labs Submodule: Zuari Reactive Framework
@@ -148,7 +125,7 @@ flowchart TD
 
 ---
 
-## 📊 Current signal model
+## Signal model
 
 The active scan uses a deterministic score with seven rule groups and 10 possible points: market structure (2), supply/demand or key-candle confirmation (2), price vs VWAP (2), EMA 9/21 alignment (1), relative volume (1), momentum (1), and Nifty 50 direction (1). BUY/SELL candidates require at least 7 points plus a risk/reward check. See the [full model description and limitations](stock-signal-bot/README.md#the-active-intraday-scoring-model).
 
@@ -156,7 +133,7 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 
 ---
 
-## ⚡ Quick Start & Installation
+## Quick start
 
 ### Windows desktop app
 The Tauri desktop window runs the dashboard and starts its local backend quietly. The app does not require Python, Node.js, pnpm, or a project checkout on the target PC. On first launch it checks WebView2 and installs it silently if missing, then downloads a pinned `uv` tool, private Python runtime, and locked backend packages into the current user's local app data. Internet access is needed for first setup; later launches reuse the environment. The tested portable folder is about 9 MB, while the runtime and dependencies use about 360 MB after the temporary download cache is removed. Setup and backend logs are under `%LOCALAPPDATA%\com.dangerlabs.smkd\logs`.
@@ -216,7 +193,7 @@ pnpm run dev
 
 ---
 
-## 📡 API Specification
+## API reference
 
 | Endpoint | Method | Description |
 |:---|:---|:---|
@@ -231,7 +208,7 @@ For the full route list, use `/docs` while the backend is running; routes can ch
 
 ---
 
-## ⚠️ Limitations & Known Constraints
+## Limitations
 
 Active issues, architectural constraints, and enhancement roadmaps are tracked transparently in the **[GitHub Issues tab](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)**:
 
@@ -242,7 +219,7 @@ Active issues, architectural constraints, and enhancement roadmaps are tracked t
 
 ---
 
-## ⚖️ Legal Disclaimer
+## Disclaimer
 
 *Stock Market Ka Don (SMKD) is an educational and analytical research technology platform developed by Danger Labs. It does not constitute financial, investment, or legal advice. Danger Labs and its contributors are not SEBI-registered investment advisors. Equity and derivatives trading involve substantial financial risk. Past statistical performance does not guarantee future market results. Always manage risk responsibly.*
 
