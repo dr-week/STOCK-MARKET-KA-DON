@@ -1,5 +1,5 @@
 import math
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 def calculate_rsi(prices: List[float], period: int = 14) -> float:
     """Computes Relative Strength Index on confirmed closes"""
@@ -52,13 +52,22 @@ def calculate_atr(highs: List[float], lows: List[float], closes: List[float], pe
     recent_tr = tr_list[-period:] if len(tr_list) >= period else tr_list
     return round(sum(recent_tr) / len(recent_tr), 2) if recent_tr else 1.0
 
-def calculate_adx_di(highs: List[float], lows: List[float], closes: List[float], period: int = 14) -> Tuple[float, float, float]:
+def calculate_adx_di(
+    highs: List[float],
+    lows: List[float],
+    closes: List[float],
+    period: int = 14,
+) -> Tuple[Optional[float], Optional[float], Optional[float]]:
     """
-    Computes (ADX, Plus_DI, Minus_DI) for trend strength and directional bias.
-    ADX > 22 indicates strong trending market.
+    Compute Wilder-smoothed (ADX, +DI, -DI).
+
+    Requires 2 * period completed candles for the initial ADX. Returns
+    (None, None, None) before that warm-up instead of fabricating a neutral value.
     """
-    if len(closes) < period + 2:
-        return (20.0, 20.0, 20.0)
+    if period <= 0 or len(closes) < 2 * period:
+        return (None, None, None)
+    if len(highs) != len(lows) or len(highs) != len(closes):
+        raise ValueError("High, low, and close series must have matching lengths")
 
     tr_list, plus_dm, minus_dm = [], [], []
     for i in range(1, len(closes)):
@@ -76,25 +85,36 @@ def calculate_adx_di(highs: List[float], lows: List[float], closes: List[float],
         plus_dm.append(p_dm)
         minus_dm.append(m_dm)
 
-    if len(tr_list) < period:
-        return (20.0, 20.0, 20.0)
+    smooth_tr = sum(tr_list[:period])
+    smooth_p_dm = sum(plus_dm[:period])
+    smooth_m_dm = sum(minus_dm[:period])
+    dx_values = []
 
-    smooth_tr = sum(tr_list[-period:])
-    smooth_p_dm = sum(plus_dm[-period:])
-    smooth_m_dm = sum(minus_dm[-period:])
+    for index in range(period - 1, len(tr_list)):
+        if index >= period:
+            smooth_tr = smooth_tr - (smooth_tr / period) + tr_list[index]
+            smooth_p_dm = smooth_p_dm - (smooth_p_dm / period) + plus_dm[index]
+            smooth_m_dm = smooth_m_dm - (smooth_m_dm / period) + minus_dm[index]
+        if smooth_tr <= 0:
+            dx_values.append(0.0)
+            continue
+        plus_di_value = (smooth_p_dm / smooth_tr) * 100
+        minus_di_value = (smooth_m_dm / smooth_tr) * 100
+        di_sum = plus_di_value + minus_di_value
+        dx_values.append(
+            abs(plus_di_value - minus_di_value) / di_sum * 100 if di_sum > 0 else 0.0
+        )
 
-    if smooth_tr == 0:
-        return (20.0, 20.0, 20.0)
+    if len(dx_values) < period:
+        return (None, None, None)
 
-    plus_di = round((smooth_p_dm / smooth_tr) * 100, 2)
-    minus_di = round((smooth_m_dm / smooth_tr) * 100, 2)
+    adx_value = sum(dx_values[:period]) / period
+    for dx in dx_values[period:]:
+        adx_value = ((adx_value * (period - 1)) + dx) / period
 
-    di_diff = abs(plus_di - minus_di)
-    di_sum = plus_di + minus_di
-    dx = (di_diff / di_sum) * 100 if di_sum > 0 else 20.0
-    adx = round(dx, 2)
-
-    return (adx, plus_di, minus_di)
+    plus_di = (smooth_p_dm / smooth_tr) * 100 if smooth_tr > 0 else 0.0
+    minus_di = (smooth_m_dm / smooth_tr) * 100 if smooth_tr > 0 else 0.0
+    return (round(adx_value, 2), round(plus_di, 2), round(minus_di, 2))
 
 def calculate_rvol(volumes: List[float], lookback: int = 20) -> float:
     """Relative Volume (RVOL) = current bar volume / average volume"""

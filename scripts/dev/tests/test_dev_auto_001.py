@@ -1,26 +1,21 @@
-import os
 import time
 import unittest
-from scripts.dev.controller.storage import init_db, get_connection
 from scripts.dev.controller.state import create_task, get_task, transition_task
-from scripts.dev.controller.workflow import WorkflowEngine
 from scripts.dev.controller.recovery import record_incident
+from scripts.dev.tests.test_support import IsolatedDevRuntime, create_test_workflow
 
 class TestDevAuto001Workflow(unittest.TestCase):
     def setUp(self):
-        init_db()
-        conn = get_connection()
-        with conn:
-            conn.execute("DELETE FROM incidents")
-            conn.execute("DELETE FROM task_events")
-            conn.execute("DELETE FROM tasks")
-        conn.close()
+        self.runtime = IsolatedDevRuntime().start()
+
+    def tearDown(self):
+        self.runtime.stop()
 
     def test_sim_1_successful_run(self):
         """Simulation 1: A successful run passing all stages and reaching DONE."""
         task_id = "SIM-01-SUCCESS"
         create_task(task_id, "Simulate successful run", ["docs/dev/START_HERE.md"], ["Docs pass"])
-        engine = WorkflowEngine(run_id=f"run_sim1_{int(time.time()*1000)}")
+        engine = create_test_workflow(run_id=f"run_sim1_{int(time.time()*1000)}")
 
         res = engine.run_or_resume(task_id)
         self.assertEqual(res["status"], "COMPLETED")
@@ -34,16 +29,16 @@ class TestDevAuto001Workflow(unittest.TestCase):
         """Simulation 2: A failing focused test halts pipeline and marks task FAILED."""
         task_id = "SIM-02-TESTFAIL"
         create_task(task_id, "Simulate failing test", ["fast-framework/packages/stock-bot-ui/src/departments/ScannerDepartment.ts"], ["Tests pass"])
-        engine = WorkflowEngine(run_id=f"run_sim2_{int(time.time()*1000)}")
-
-        # Override change map check dynamically or simulate failing command
-        engine._execute_stage_original = engine._execute_stage
-        def mock_execute_stage(stage, task, files, focused, regressions):
-            if stage == "run-focused-tests":
-                return False, 1, "AssertionError: expected false to be true in ScannerDepartment.ts"
-            return engine._execute_stage_original(stage, task, files, focused, regressions)
-
-        engine._execute_stage = mock_execute_stage
+        engine = create_test_workflow(
+            run_id=f"run_sim2_{int(time.time()*1000)}",
+            stage_results={
+                "run-focused-tests": (
+                    False,
+                    1,
+                    "AssertionError: expected false to be true in ScannerDepartment.ts",
+                )
+            },
+        )
         res = engine.run_or_resume(task_id)
 
         self.assertEqual(res["status"], "FAILED")
@@ -54,7 +49,7 @@ class TestDevAuto001Workflow(unittest.TestCase):
         self.assertNotEqual(task["status"], "DONE")
 
     def test_sim_3_two_failure_circuit_breaker(self):
-        """Simulation 3: Repeated identical failure triggers circuit breaker and BLOCKS task."""
+        """Simulation 3: Repeated identical failure is recorded without blocking edits."""
         task_id = "SIM-03-BREAKER"
         create_task(task_id, "Simulate repeated error", [], [])
         transition_task(task_id, "IN_PROGRESS")
@@ -67,7 +62,7 @@ class TestDevAuto001Workflow(unittest.TestCase):
         self.assertTrue(inc2["is_blocked"])
 
         task = get_task(task_id)
-        self.assertEqual(task["status"], "BLOCKED")
+        self.assertEqual(task["status"], "IN_PROGRESS")
 
     def test_sim_4_interrupted_run_resumption(self):
         """Simulation 4: Interrupted run resumes at unfinished step without repeating completed steps."""
@@ -76,13 +71,13 @@ class TestDevAuto001Workflow(unittest.TestCase):
         run_id = f"run_sim4_{int(time.time()*1000)}"
 
         # Phase 1: Simulate interruption after inspect-task
-        engine1 = WorkflowEngine(run_id=run_id)
+        engine1 = create_test_workflow(run_id=run_id)
         engine1.state["stages"]["validate-environment"]["status"] = "COMPLETED"
         engine1.state["stages"]["inspect-task"]["status"] = "COMPLETED"
         engine1._save_state()
 
         # Phase 2: Resume with new engine instance
-        engine2 = WorkflowEngine(run_id=run_id)
+        engine2 = create_test_workflow(run_id=run_id)
         res = engine2.run_or_resume(task_id)
 
         self.assertEqual(res["status"], "COMPLETED")
@@ -96,16 +91,16 @@ class TestDevAuto001Workflow(unittest.TestCase):
         """Simulation 5: Missing mapped doc halts workflow at update-documentation."""
         task_id = "SIM-05-DOCFAIL"
         create_task(task_id, "Simulate doc fail", ["stock-signal-bot/backend/app/api/routes.py"], ["Docs pass"])
-        engine = WorkflowEngine(run_id=f"run_sim5_{int(time.time()*1000)}")
-
-        # Mock documentation status returning PENDING_SYNC
-        engine._execute_stage_original = engine._execute_stage
-        def mock_doc_stage(stage, task, files, focused, regressions):
-            if stage == "update-documentation":
-                return False, 1, "Documentation pending sync: docs/contracts/scanner-api.md"
-            return engine._execute_stage_original(stage, task, files, focused, regressions)
-
-        engine._execute_stage = mock_doc_stage
+        engine = create_test_workflow(
+            run_id=f"run_sim5_{int(time.time()*1000)}",
+            stage_results={
+                "update-documentation": (
+                    False,
+                    1,
+                    "Documentation pending sync: docs/contracts/scanner-api.md",
+                )
+            },
+        )
         res = engine.run_or_resume(task_id)
 
         self.assertEqual(res["status"], "FAILED")

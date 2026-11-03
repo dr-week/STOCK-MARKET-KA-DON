@@ -1,4 +1,18 @@
 {
+  "name": "smkd-terminal",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd stock-signal-bot/backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "dev:ui": "pnpm -C fast-framework/packages/stock-bot-ui dev --host",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:run": "npx cap sync android && npx cap open android",
+    "test:stock-ai": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev/test-stock-ai.ps1 -Suite offline",
+    "audit:modules": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev/audit-large-modules.ps1",
+    "doctor:integration": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev/check-smkd-integration.ps1",
+    "docs:check": "python scripts/dev/docs_tools/check.py",
+    "docs:find": "python scripts/dev/docs_tools/find.py"
+  },
   "devDependencies": {
     "@capacitor/android": "^8.5.3",
     "@capacitor/cli": "^8.5.3",

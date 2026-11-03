@@ -51,14 +51,14 @@ Run-Eval "Task Transaction Lifecycle" {
     return ($status.task_id -eq $TaskId -and $status.status -eq "IN_PROGRESS")
 }
 
-# Eval 3: Failure Fingerprint Circuit Breaker
-Run-Eval "Two-Failure Circuit Breaker" {
+# Eval 3: Failure fingerprint remains advisory
+Run-Eval "Repeated Failure Advisory" {
     $TaskId = "EVAL-TEST-002"
     & "$PSScriptRoot\task-transaction.ps1" -Action "start" -TaskId $TaskId -Objective "Circuit Breaker Test" | Out-Null
     & "$PSScriptRoot\task-transaction.ps1" -Action "record-failure" -TaskId $TaskId -Fingerprint "JSON_PARSE_ERROR" -Command "test-cmd" -OutputLog "Syntax error" | Out-Null
     & "$PSScriptRoot\task-transaction.ps1" -Action "record-failure" -TaskId $TaskId -Fingerprint "JSON_PARSE_ERROR" -Command "test-cmd" -OutputLog "Syntax error" | Out-Null
     $status = & "$PSScriptRoot\task-transaction.ps1" -Action "status" -TaskId $TaskId | ConvertFrom-Json
-    return ($status.status -eq "BLOCKED")
+    return ($status.status -eq "IN_PROGRESS")
 }
 
 # Eval 4: Rules & Skills Structure

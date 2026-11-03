@@ -84,8 +84,8 @@ def record_analysis_tree(market_phase: str, ist_time: str, stocks_data: List[Dic
     cursor = conn.cursor()
     
     now = time.time()
-    bullish = sum(1 for s in stocks_data if "BUY" in s.get("intraday", {}).get("signal", ""))
-    bearish = sum(1 for s in stocks_data if "SELL" in s.get("intraday", {}).get("signal", ""))
+    bullish = sum(1 for s in stocks_data if "BUY" in (s.get("intraday") or {}).get("signal", ""))
+    bearish = sum(1 for s in stocks_data if "SELL" in (s.get("intraday") or {}).get("signal", ""))
     
     cursor.execute("""
         INSERT INTO scan_runs (timestamp, ist_time, market_phase, total_scanned, bullish_count, bearish_count)
@@ -95,8 +95,8 @@ def record_analysis_tree(market_phase: str, ist_time: str, stocks_data: List[Dic
     scan_id = cursor.lastrowid
     
     for s in stocks_data:
-        intra = s.get("intraday", {})
-        ai = s.get("ai_decision", {})
+        intra = s.get("intraday") or {}
+        ai = s.get("ai_decision") or {}
         cursor.execute("""
             INSERT INTO signal_nodes (
                 scan_run_id, symbol, company_name, sector, price, change_pct,

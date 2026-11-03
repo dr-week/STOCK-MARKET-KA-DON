@@ -20,7 +20,11 @@ def get_market_session_state() -> Dict[str, Any]:
     square_off = 15 * 60 + 15  # 15:15
     market_close = 15 * 60 + 30# 15:30
 
-    if minutes_from_midnight < market_open:
+    if now.weekday() >= 5:
+        phase = "WEEKEND / CLOSED"
+        can_trade = False
+        message = "NSE cash market is closed on weekends."
+    elif minutes_from_midnight < market_open:
         phase = "PRE_MARKET / CLOSED"
         can_trade = False
         message = "Pre-market price discovery. Do not enter orders."

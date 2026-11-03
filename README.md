@@ -21,6 +21,8 @@
 
 </div>
 
+> **Verified implementation status (2026-11-02):** SMKD is an experimental NSE analysis dashboard, not a production-grade or proven prediction system. Its SystemOne output is deterministic rule scoring, not a trained model; market-data freshness is not guaranteed; and the UI can show sample rows when the API fails. Some feature descriptions below may be aspirational rather than implemented. See [the verified product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [documentation index](docs/INDEX.md) for current behavior and gaps.
+
 ## 🏢 Designed & Engineered by Danger Labs
 
 **Stock Market Ka Don (SMKD)** was architected and built by **Danger Labs**, an elite engineering research and quantitative trading systems lab. Danger Labs designs mission-critical algorithmic software, high-frequency signal pipelines, and low-latency reactive frontends.
@@ -39,7 +41,8 @@ SMKD is an evolving market-analysis and trading research project. Contributions,
 - **Report a bug:** [Open an issue](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues/new)
 - **Suggest an improvement:** [Feature requests](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)
 - **Contribute code:** [Open a pull request](https://github.com/dr-week/STOCK-MARKET-KA-DON/pulls)
-- **Contribution guide:** [CONTRIBUTING.md](CONTRIBUTING.md) *(add this file if it does not exist)*
+- **Contribution guide:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Developer docs and research search:** [DOCS.md](DOCS.md) · [documentation index](docs/INDEX.md)
 
 ### Repository activity
 
@@ -196,6 +199,18 @@ Run the root supervisor script:
 ```powershell
 .\launcher\start.bat
 ```
+
+### Native Android + Frontend Workflow
+Use the bundled scripts for a mobile-ready local setup:
+
+```bash
+npm run dev:backend
+npm run dev:ui
+npm run android:sync
+npm run android:open
+```
+
+The Android wrapper is already configured through Capacitor. See [docs/ANDROID_SETUP.md](docs/ANDROID_SETUP.md) for the full mobile packaging guide.
 
 ### Manual Step-by-Step Setup
 

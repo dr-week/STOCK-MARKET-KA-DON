@@ -48,6 +48,13 @@ Thumbs.db
 # Backup database snapshots
 stock-signal-bot/backend/app/backups/**/*.db.gz
 stock-signal-bot/backend/app/backups/**/*.json
+stock-signal-bot/backend/app/data/paper_trades.db
+stock-signal-bot/backend/app/data/paper_trades.db-shm
+stock-signal-bot/backend/app/data/paper_trades.db-wal
+stock-signal-bot/backend/app/data/market_history.db
+stock-signal-bot/backend/app/data/market_history.db-shm
+stock-signal-bot/backend/app/data/market_history.db-wal
+stock-signal-bot/backend/app/data/research/
 
 # Runtime diagnostics (generated logs, crash bundles)
 .runtime/

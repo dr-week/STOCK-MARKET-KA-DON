@@ -26,7 +26,7 @@ def evaluate_intraday_confluence(
     - Validates setups via mandatory Risk Engine (1:2 R:R, ₹90 risk on ₹18k)
     - Produces explainable reasons for BUY / SELL / WAIT
     """
-    if len(closes) < 15:
+    if len(closes) < 28:
         return {
             "signal": "WAIT",
             "score": 0,
@@ -35,7 +35,7 @@ def evaluate_intraday_confluence(
             "target_1": None,
             "target_2": None,
             "stop_loss": None,
-            "reasons": ["Awaiting live completed candle feed"],
+            "reasons": ["Need at least 28 completed 5-minute candles for the 14-period Wilder ADX warm-up."],
             "risk_analysis": {}
         }
 

@@ -1,16 +1,33 @@
-import math
-from typing import Dict, Any, List
+from typing import Any, Dict, Optional
+
+from app.ai.scoring_components import (
+    classify_signal_quality,
+    compute_expected_value,
+    compute_win_probability,
+    score_multi_timeframe,
+    score_sector_regime,
+)
+from app.ai.system_one_rules import score_intraday_factors
+
 
 class SystemOneDecisionModel:
-    """
-    Sub-millisecond System 1 fast-reflex inference engine.
-    Applies multi-factor probabilistic scoring across:
-    1. Trend & VWAP Slope Confluence
-    2. Momentum Exhaustion Penalty (Overbought/Oversold Dampener)
-    3. Volatility Compression / Expansion (ATR ratio)
-    4. Sentiment Alignment Weighting
-    """
-    
+    """Compatibility facade for the deterministic SystemOne scoring rules."""
+
+    def _compute_win_probability(self, score: float) -> float:
+        return compute_win_probability(score)
+
+    def _compute_expected_value(self, win_prob: float, avg_rr: float) -> float:
+        return compute_expected_value(win_prob, avg_rr)
+
+    def _compute_signal_quality(self, ev: float) -> str:
+        return classify_signal_quality(ev)
+
+    def score_multi_timeframe(self, timeframe_alignment: Dict[str, str]) -> float:
+        return score_multi_timeframe(timeframe_alignment)
+
+    def score_sector_regime(self, sector: str, sector_strengths: Dict[str, str]) -> float:
+        return score_sector_regime(sector, sector_strengths)
+
     def evaluate(
         self,
         symbol: str,
@@ -22,82 +39,67 @@ class SystemOneDecisionModel:
         atr: float,
         change_pct: float,
         news_sentiment: str,
-        market_phase: str
+        market_phase: str,
+        adx: float = 20.0,
+        relative_volume: float = 1.0,
+        support: Optional[float] = None,
+        resistance: Optional[float] = None,
+        trend_strength: float = 0.5,
+        volume_confirmation: bool = False,
+        structure_bias: str = "NEUTRAL",
+        market_regime: str = "SIDEWAYS",
+        avg_rr: float = 2.5,
+        m15_trend: str = "NEUTRAL",
+        h1_trend: str = "NEUTRAL",
+        sector: str = "",
+        sector_strengths: Optional[Dict[str, str]] = None,
+        **_kwargs: Any,
     ) -> Dict[str, Any]:
-        score = 0.50  # 0.00 (Heavy Sell) to 1.00 (Strong Buy)
-        rules_fired = []
-        
-        # 1. VWAP Distance & Institutional Acceptance
-        vwap_delta_pct = ((price - vwap) / vwap) * 100 if vwap else 0
-        if vwap_delta_pct > 0.15:
-            score += 0.15
-            rules_fired.append("Price holds firmly above institutional VWAP floor")
-        elif vwap_delta_pct < -0.15:
-            score -= 0.15
-            rules_fired.append("Price rejected below institutional VWAP ceiling")
-            
-        # 2. Dual EMA Exponential Gradient
-        ema_spread = ((ema_9 - ema_21) / ema_21) * 100 if ema_21 else 0
-        if ema_spread > 0.1:
-            score += 0.12
-            rules_fired.append("Short-term 9-EMA velocity accelerating above 21-EMA")
-        elif ema_spread < -0.1:
-            score -= 0.12
-            rules_fired.append("Short-term 9-EMA slope dipping under 21-EMA")
-            
-        # 3. Non-Linear RSI Momentum Scoring
-        # Optimal bullish sweet spot: 55 to 68. Overbought penalty > 74.
-        if 55 <= rsi <= 68:
-            score += 0.12
-            rules_fired.append(f"RSI ({rsi}) in high-velocity expansion sweet spot")
-        elif rsi > 74:
-            score -= 0.18
-            rules_fired.append(f"RSI ({rsi}) stretched into extreme overbought trap risk")
-        elif 30 <= rsi <= 45:
-            score -= 0.10
-            rules_fired.append(f"RSI ({rsi}) under bearish pressure")
-        elif rsi < 25:
-            score += 0.10  # Potential mean-reversion scalp
-            rules_fired.append(f"RSI ({rsi}) oversold; mean reversion bounce potential")
-            
-        # 4. News Sentiment Alignment
-        if news_sentiment == "BULLISH":
-            score += 0.08
-            rules_fired.append("Positive headline sentiment aligning with technicals")
-        elif news_sentiment == "BEARISH":
-            score -= 0.08
-            rules_fired.append("Risk Warning: Negative press headlines exerting selling pressure")
-            
-        # 5. Timing Window Penalty
-        if market_phase == "OPENING_TRAP_ZONE":
-            score = 0.50  # Hard neutralize during 09:15-09:30 AM
-            rules_fired.append("Session Rule: High-spread opening traps active; signals neutralized")
-            
-        # Clamp score between 0.05 and 0.95
-        score = round(max(0.05, min(0.95, score)), 2)
-        
-        # Determine AI Verdict
+        score, rules_fired = score_intraday_factors(
+            price=price,
+            vwap=vwap,
+            rsi=rsi,
+            ema_9=ema_9,
+            ema_21=ema_21,
+            change_pct=change_pct,
+            news_sentiment=news_sentiment,
+            market_phase=market_phase,
+            adx=adx,
+            relative_volume=relative_volume,
+            support=support,
+            resistance=resistance,
+            trend_strength=trend_strength,
+            volume_confirmation=volume_confirmation,
+            structure_bias=structure_bias,
+            market_regime=market_regime,
+            m15_trend=m15_trend,
+            h1_trend=h1_trend,
+            sector=sector,
+            sector_strengths=sector_strengths or {},
+        )
+
         if score >= 0.72:
-            verdict = "STRONG_BUY_CONFLUENCE"
-            action = "HIGH PROBABILITY LONG"
+            verdict, action = "STRONG_BUY_CONFLUENCE", "HIGH PROBABILITY LONG"
         elif score >= 0.58:
-            verdict = "MODERATE_BUY"
-            action = "WATCH FOR PULLBACK TO VWAP"
+            verdict, action = "MODERATE_BUY", "WATCH FOR PULLBACK TO VWAP"
         elif score <= 0.32:
-            verdict = "STRONG_SELL_CONFLUENCE"
-            action = "HIGH PROBABILITY SHORT"
+            verdict, action = "STRONG_SELL_CONFLUENCE", "HIGH PROBABILITY SHORT"
         elif score <= 0.44:
-            verdict = "MODERATE_SELL"
-            action = "WATCH FOR BREAKDOWN"
+            verdict, action = "MODERATE_SELL", "WATCH FOR BREAKDOWN"
         else:
-            verdict = "CHOP_NEUTRAL"
-            action = "NO EDGE / WAIT"
-            
+            verdict, action = "CHOP_NEUTRAL", "NO EDGE / WAIT"
+
+        win_probability = round(compute_win_probability(score), 4)
+        expected_value = compute_expected_value(win_probability, avg_rr)
         return {
             "ai_score": score,
             "ai_verdict": verdict,
             "recommended_action": action,
-            "system_one_rules": rules_fired
+            "system_one_rules": rules_fired,
+            "win_probability": win_probability,
+            "expected_value": expected_value,
+            "signal_quality": classify_signal_quality(expected_value),
         }
+
 
 decision_engine = SystemOneDecisionModel()

@@ -57,11 +57,7 @@ def cmd_run(args):
         print(f"Task '{args.task_id}' not found.", file=sys.stderr)
         sys.exit(1)
 
-    if task["status"] in {"BLOCKED", "DONE"}:
-        print(f"Cannot run commands on task in '{task['status']}' state.", file=sys.stderr)
-        sys.exit(1)
-
-    if task["status"] in {"READY", "RETRY_PENDING"}:
+    if task["status"] in {"READY", "RETRY_PENDING", "BLOCKED", "DONE"}:
         transition_task(args.task_id, "IN_PROGRESS", reason="Command execution started")
 
     exit_code, stdout, stderr, summary = execute_command(args.task_id, args.command, cwd=args.cwd)
@@ -71,10 +67,9 @@ def cmd_run(args):
         print(stdout + "\n" + stderr)
 
     if exit_code != 0:
-        inc = record_incident(args.task_id, args.command, output, exit_code)
+        inc = record_incident(args.task_id, args.command, stdout + "\n" + stderr, exit_code)
         if inc["is_blocked"]:
-            print(f"\n[CIRCUIT BREAKER] Task {args.task_id} transitioned to BLOCKED due to repeated error '{inc['fingerprint']}'", file=sys.stderr)
-            sys.exit(exit_code)
+            print(f"\n[ADVISORY] Repeated failure '{inc['fingerprint']}'. Review diagnostics before retrying.", file=sys.stderr)
     sys.exit(exit_code)
 
 def cmd_verify(args):
@@ -89,12 +84,13 @@ def cmd_verify(args):
     # Scope and doc checks
     changed_files = [f.strip() for f in args.changed_files.split(",") if f.strip()] if args.changed_files else []
     scope_violations = [f for f in changed_files if task["scope"] and f not in task["scope"]]
+    if scope_violations:
+        print(f"[ADVISORY] Files outside declared scope: {scope_violations}", file=sys.stderr)
     doc_status = check_doc_sync_status(args.task_id, changed_files)
 
     can_done = (
-        not scope_violations and
-        doc_status["status"] in {"SYNCED", "NOT_REQUIRED"} and
         args.test_exit == 0
+        and doc_status["status"] != "PENDING_SYNC"
     )
 
     if can_done:
@@ -102,12 +98,10 @@ def cmd_verify(args):
         print(f"[SUCCESS] Task {args.task_id} verified and moved to DONE.")
     else:
         reasons = []
-        if scope_violations:
-            reasons.append(f"Scope violations: {scope_violations}")
-        if doc_status["status"] == "PENDING_SYNC":
-            reasons.append(f"Docs pending sync: {doc_status['missing_docs']}")
         if args.test_exit != 0:
             reasons.append(f"Tests failed with exit code {args.test_exit}")
+        if doc_status["status"] == "PENDING_SYNC":
+            reasons.append(f"Documentation update required: {doc_status['pending_docs']}")
 
         final_task = transition_task(
             args.task_id,

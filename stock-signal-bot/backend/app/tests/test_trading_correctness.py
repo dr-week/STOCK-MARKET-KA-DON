@@ -33,7 +33,7 @@ class TestTradingCorrectnessAndReliability(unittest.TestCase):
         """
         P0 Test: Strict capital risk constraints:
         - 0.5% risk per trade on ₹18,000 = ₹90.00 max allowable loss.
-        - Position size = allowable_risk / risk_distance (rounded down).
+        - Position size keeps gross stop loss plus estimated charges within the risk budget.
         """
         capital = 18000.0
         entry = 1190.0
@@ -42,8 +42,9 @@ class TestTradingCorrectnessAndReliability(unittest.TestCase):
         t2 = 1178.0
 
         sizing = calculate_trade_risk_and_sizing(entry, sl, t1, t2, capital)
-        self.assertEqual(sizing["shares_qty"], 22, "₹90 / ₹4 risk = 22 shares")
+        self.assertLess(sizing["shares_qty"], 22, "Estimated round-trip charges reduce risk-budget size")
         self.assertLessEqual(sizing["actual_risk_inr"], 90.0)
+        self.assertLessEqual(sizing["estimated_loss_at_stop_inr"], sizing["allowable_risk_inr"])
         self.assertGreater(sizing["estimated_friction_inr"], 0.0)
 
     def test_market_data_gap_and_spike_detection(self):
