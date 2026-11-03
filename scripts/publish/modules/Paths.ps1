@@ -1,5 +1,5 @@
 function Normalize-PublishPaths([string[]]$Paths) {
-    return @($Paths | ForEach-Object { $_.Replace('\', '/').Trim().Trim('/') } | Where-Object { $_ })
+    return @($Paths | ForEach-Object { $_ -split '[,;]' } | ForEach-Object { $_.Replace('\', '/').Trim().Trim('/') } | Where-Object { $_ })
 }
 
 function Test-PublishPathMatch([string]$Path, [string[]]$Rules) {

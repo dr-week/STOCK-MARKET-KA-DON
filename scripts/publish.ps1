@@ -155,17 +155,31 @@ try {
         }
     }
 
-    $branchExists = git show-ref --verify --quiet "refs/heads/$Branch"
-    if ($LASTEXITCODE -eq 0) {
-        $baseRef = "refs/heads/$Branch"
+    $localBranchExists = git show-ref --verify --quiet "refs/heads/$Branch"
+    $localBase = if ($LASTEXITCODE -eq 0) { (git rev-parse "refs/heads/$Branch").Trim() } else { $null }
+    $remoteRef = git ls-remote --heads $Remote "refs/heads/$Branch"
+    if ($LASTEXITCODE -ne 0) { throw "Could not inspect $Remote/$Branch." }
+
+    if ($remoteRef) {
+        Invoke-PublishGit @('fetch', '--no-tags', $Remote, "refs/heads/$Branch") "Could not fetch $Remote/$Branch."
+        $remoteBase = (git rev-parse FETCH_HEAD).Trim()
+        if ($LASTEXITCODE -ne 0 -or -not $remoteBase) { throw "Could not resolve fetched branch $Remote/$Branch." }
+        if (-not $localBase) {
+            $baseRef = $remoteBase
+        } else {
+            git merge-base --is-ancestor $remoteBase $localBase 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                $baseRef = $localBase
+            } else {
+                git merge-base --is-ancestor $localBase $remoteBase 2>$null
+                if ($LASTEXITCODE -eq 0) { $baseRef = $remoteBase }
+                else { throw "Local '$Branch' and $Remote/$Branch diverged. Sync or resolve the branch before publishing." }
+            }
+        }
+    } elseif ($localBase) {
+        $baseRef = $localBase
     } else {
-        $remoteRef = git ls-remote --heads $Remote "refs/heads/$Branch"
-        if ($LASTEXITCODE -ne 0) { throw "Could not inspect $Remote/$Branch." }
-        if ($remoteRef) {
-            Invoke-PublishGit @('fetch', '--no-tags', $Remote, "refs/heads/$Branch") "Could not fetch $Remote/$Branch."
-            $baseRef = (git rev-parse FETCH_HEAD).Trim()
-            if ($LASTEXITCODE -ne 0 -or -not $baseRef) { throw "Could not resolve fetched branch $Remote/$Branch." }
-        } else { throw "Target branch '$Branch' does not exist locally or on '$Remote'." }
+        throw "Target branch '$Branch' does not exist locally or on '$Remote'."
     }
 
     Invoke-PublishGit @('worktree', 'add', '--detach', $worktreeRoot, $baseRef) 'Could not create isolated publish worktree.'
@@ -183,30 +197,39 @@ try {
     }
 
     Push-Location $worktreeRoot
+    $nothingToPublish = $false
     try {
-        Invoke-PublishGit @('add', '--', $selected) 'Could not stage selected paths in isolated worktree.'
+        $addArgs = @('add', '--') + $selected
+        Invoke-PublishGit $addArgs 'Could not stage selected paths in isolated worktree.'
         & git diff --cached --check
         if ($LASTEXITCODE -ne 0) { throw 'Staged diff has whitespace errors.' }
         $stagedPaths = @(git diff --cached --name-only)
         if (@($stagedPaths | Where-Object { $_ -notin $selected }).Count -gt 0) { throw 'Unexpected paths entered the isolated commit.' }
-        if ($stagedPaths.Count -eq 0) { throw 'Selected paths have no differences from the destination branch.' }
-
-        $commitArgs = @('commit', '-m', $Message)
-        if ($NoVerify) { $commitArgs += '--no-verify' }
-        Invoke-PublishGit $commitArgs 'Commit failed in isolated worktree.'
-        $commit = git rev-parse HEAD
-        if ($Action -eq 'Push') {
-            & git push $Remote "HEAD:refs/heads/$Branch"
-            if ($LASTEXITCODE -ne 0) {
-                $savedRef = "refs/codex/publish/$commit"
-                git update-ref $savedRef $commit
-                throw "Push failed. Commit is saved locally as $savedRef."
-            }
+        if ($stagedPaths.Count -eq 0) {
+            $nothingToPublish = $true
         } else {
-            $savedRef = "refs/codex/publish/$commit"
-            Invoke-PublishGit @('update-ref', $savedRef, $commit) 'Could not preserve local commit reference.'
+            $commitArgs = @('commit', '-m', $Message)
+            if ($NoVerify) { $commitArgs += '--no-verify' }
+            Invoke-PublishGit $commitArgs 'Commit failed in isolated worktree.'
+            $commit = git rev-parse HEAD
+            if ($Action -eq 'Push') {
+                & git push $Remote "HEAD:refs/heads/$Branch"
+                if ($LASTEXITCODE -ne 0) {
+                    $savedRef = "refs/codex/publish/$commit"
+                    git update-ref $savedRef $commit
+                    throw "Push failed. Commit is saved locally as $savedRef."
+                }
+            } else {
+                $savedRef = "refs/codex/publish/$commit"
+                Invoke-PublishGit @('update-ref', $savedRef, $commit) 'Could not preserve local commit reference.'
+            }
         }
     } finally { Pop-Location }
+
+    if ($nothingToPublish) {
+        Write-Host "Selected files already match $Remote/$Branch; nothing to commit or push."
+        return
+    }
 
     if ($Action -eq 'Commit') {
         Write-Host "Created local commit $commit (saved under refs/codex/publish/$commit; current branch and checkout unchanged)."
