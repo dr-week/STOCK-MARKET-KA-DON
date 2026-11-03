@@ -1,7 +1,7 @@
 {
   "remote": "origin",
-  "branch": "main",
-  "changeSet": "All",
+  "branch": "",
+  "changeSet": "Changed",
   "allowedRoots": [
     "README.md",
     "DOCS.md",
@@ -23,5 +23,16 @@
   "include": [],
   "exclude": [],
   "blockedPatterns": [],
+  "presets": {
+    "docs": {
+      "include": ["README.md", "DOCS.md", "CHANGELOG.md", "CONTRIBUTING.md", "docs"]
+    },
+    "desktop": {
+      "include": ["desktop", "launcher", "README.md", "docs/ANDROID_SETUP.md"]
+    },
+    "backend": {
+      "include": ["stock-signal-bot", "docs"]
+    }
+  },
   "message": ""
 }

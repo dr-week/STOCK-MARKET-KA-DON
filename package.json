@@ -12,9 +12,12 @@
     "doctor:integration": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev/check-smkd-integration.ps1",
     "docs:check": "python scripts/dev/docs_tools/check.py",
     "docs:find": "python scripts/dev/docs_tools/find.py",
-    "publish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1",
-    "publish:push": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Action Push",
-    "publish:commit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Action Commit"
+    "repo:publish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1",
+    "repo:commit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Action Commit",
+    "repo:push": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Action Push",
+    "repo:docs": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Preset docs",
+    "repo:docs:push": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Preset docs -Action Push",
+    "repo:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Preset backend"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.3",

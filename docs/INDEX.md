@@ -16,6 +16,7 @@
 - [Research register: free data and AI](./research/FREE_DATA_AND_AI.md) — sourced provider/model notes, access caveats, and adoption decisions.
 - [Local self-improving agents](./research/LOCAL_SELF_IMPROVING_AGENTS.md) — Hermes and alternatives, observed laptop resources, and a safe agent/feedback design.
 - [Documentation workflow](./dev/DOCUMENTATION_WORKFLOW.md) — search existing research and check code-to-doc impact.
+- [Publishing workflow](./PUBLISH_WORKFLOW.md) — configurable preview, local commit, and push commands with path safety rules.
 
 ## Reference
 

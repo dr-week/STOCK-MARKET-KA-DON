@@ -5,9 +5,10 @@ param(
     [string]$Remote = $(if ($env:SMKD_PUBLISH_REMOTE) { $env:SMKD_PUBLISH_REMOTE } else { 'origin' }),
     [string]$Branch = $env:SMKD_PUBLISH_BRANCH,
     [ValidateSet('All', 'Tracked', 'Untracked', 'Changed')]
-    [string]$ChangeSet = 'All',
+    [string]$ChangeSet = 'Changed',
     [string[]]$Include = @(),
     [string[]]$Exclude = @(),
+    [string]$Preset = '',
     [string]$Config = '',
     [switch]$AllAllowed,
     [switch]$NoVerify,
@@ -15,25 +16,27 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$changeSetExplicit = $PSBoundParameters.ContainsKey('ChangeSet')
 
 function Show-Help {
     @'
 SMKD publisher (PowerShell)
 
 Usage:
-  pnpm publish -- -Help
-  pnpm publish -- -Include README.md,docs
-  pnpm publish -- -Action Commit -Include docs -Message "docs: update guides"
-  pnpm publish -- -Action Push -ChangeSet Changed -Message "fix: update scanner"
-  pnpm publish -- -Action Push -Config scripts/publish.config.json
+  pnpm repo:publish -- -Help
+  pnpm repo:publish -- -Preset docs
+  pnpm repo:publish -- -Action Commit -Preset docs -Message "docs: update guides"
+  pnpm repo:publish -- -Action Push -ChangeSet Changed -Message "fix: update scanner"
+  pnpm repo:publish -- -Action Push -Config scripts/publish.config.json
 
 Options:
   -Action Preview|Commit|Push     Preview, commit locally, or commit and push
   -Message TEXT                  Commit message; may use SMKD_PUBLISH_MESSAGE
   -Remote NAME -Branch NAME      Destination; defaults to origin/current branch
-  -ChangeSet All|Tracked|Untracked|Changed
-                                 Choose modified, new, or all working-tree paths
+  -ChangeSet Changed|Tracked|Untracked|All
+                                 Choose changed paths, modified paths, new files, or all tracked files
   -Include PATHS -Exclude PATHS  Repo-relative path filters (comma/semicolon lists)
+  -Preset NAME                   Named scope from the JSON config; CLI paths override it
   -Config FILE                   Optional JSON defaults; see publish.config.example.json
   -AllAllowed                    Scan safe roots whether modified or not (tracked files only)
   -NoVerify                      Skip Git hooks (normally keep hooks enabled)
@@ -43,41 +46,26 @@ fast-framework submodule. Use Preview first; the regular Git index is preserved.
 '@ | Write-Host
 }
 
-function Normalize-Paths([string[]]$Paths) {
-    return @($Paths | ForEach-Object { $_.Replace('\', '/').Trim().Trim('/') } | Where-Object { $_ })
-}
-
-function Test-PathMatches([string]$Path, [string[]]$Rules) {
-    foreach ($rule in $Rules) {
-        if ($rule -match '[*?\[]') {
-            if ($Path -like $rule) { return $true }
-        } elseif ($Path -eq $rule -or $Path.StartsWith("$rule/", [System.StringComparison]::OrdinalIgnoreCase)) {
-            return $true
-        }
-    }
-    return $false
-}
-
-function Invoke-GitChecked([string[]]$GitArgs, [string]$Failure) {
-    & git @GitArgs
-    if ($LASTEXITCODE -ne 0) { throw $Failure }
-}
-
 if ($Help) { Show-Help; exit 0 }
 
-$repoRoot = (git rev-parse --show-toplevel).Trim()
-if ($LASTEXITCODE -ne 0 -or -not $repoRoot) { throw 'Run inside the SMKD Git repository.' }
+$moduleRoot = Join-Path $PSScriptRoot 'publish/modules'
+. (Join-Path $moduleRoot 'Git.ps1')
+. (Join-Path $moduleRoot 'Configuration.ps1')
+. (Join-Path $moduleRoot 'Paths.ps1')
+$repoRoot = Get-PublishRepoRoot
 Set-Location -LiteralPath $repoRoot
 
-$configData = @{}
-if (-not $Config) { $Config = 'scripts/publish.config.json' }
-if (-not [System.IO.Path]::IsPathRooted($Config)) { $Config = Join-Path $repoRoot $Config }
-if (Test-Path -LiteralPath $Config) {
-    try {
-        $configObject = Get-Content -LiteralPath $Config -Raw | ConvertFrom-Json
-        foreach ($property in $configObject.PSObject.Properties) { $configData[$property.Name] = $property.Value }
-    }
-    catch { throw "Invalid publisher JSON config '$Config': $($_.Exception.Message)" }
+if (-not $Config) {
+    $localConfig = Join-Path $repoRoot 'scripts/publish.config.json'
+    $Config = if (Test-Path -LiteralPath $localConfig) { $localConfig } else { 'scripts/publish.config.example.json' }
+}
+$configData = Read-PublishConfig $Config $repoRoot
+
+if ($Preset) {
+    $presetData = Get-PublishPreset $configData $Preset
+    if ($Include.Count -eq 0 -and $presetData.include) { $Include = @($presetData.include) }
+    if ($Exclude.Count -eq 0 -and $presetData.exclude) { $Exclude = @($presetData.exclude) }
+    if (-not $changeSetExplicit -and $presetData.changeSet) { $ChangeSet = $presetData.changeSet }
 }
 
 $allowedRoots = @(
@@ -87,7 +75,7 @@ $allowedRoots = @(
     'scripts', 'stock-signal-bot', '.github'
 )
 if ($configData.allowedRoots) { $allowedRoots = @($configData.allowedRoots) }
-$allowedRoots = Normalize-Paths $allowedRoots
+$allowedRoots = Normalize-PublishPaths $allowedRoots
 
 $blockedPatterns = @(
     '(^|/)(\.env($|\.)|secrets?($|/)|credentials?($|/))',
@@ -99,12 +87,12 @@ if ($configData.blockedPatterns) { $blockedPatterns += @($configData.blockedPatt
 
 if ($configData.remote -and $Remote -eq 'origin' -and -not $env:SMKD_PUBLISH_REMOTE) { $Remote = $configData.remote }
 if ($configData.branch -and -not $Branch) { $Branch = $configData.branch }
-if ($configData.changeSet -and $ChangeSet -eq 'All') { $ChangeSet = $configData.changeSet }
+if ($configData.changeSet -and -not $changeSetExplicit -and -not ($Preset -and $presetData.changeSet)) { $ChangeSet = $configData.changeSet }
 if ($Include.Count -eq 0 -and $configData.include) { $Include = @($configData.include) }
 if ($Exclude.Count -eq 0 -and $configData.exclude) { $Exclude = @($configData.exclude) }
 if (-not $Message -and $configData.message) { $Message = $configData.message }
-$Include = Normalize-Paths $Include
-$Exclude = Normalize-Paths $Exclude
+$Include = Normalize-PublishPaths $Include
+$Exclude = Normalize-PublishPaths $Exclude
 
 if (-not $Remote.Trim()) { throw 'Remote name cannot be empty.' }
 $remoteUrl = git remote get-url $Remote 2>$null
@@ -124,7 +112,7 @@ switch ($ChangeSet) {
     'Tracked' { $candidates = @($tracked) }
     'Untracked' { $candidates = @($untracked) }
     'Changed' { $candidates = @($tracked + $untracked) }
-    default { $candidates = @($tracked + $untracked) }
+    default { $candidates = @(git ls-files) + $untracked }
 }
 if ($AllAllowed) {
     $allTracked = @(git ls-files)
@@ -132,15 +120,9 @@ if ($AllAllowed) {
 }
 $candidates = @($candidates | Sort-Object -Unique)
 
-$selected = @(); $excluded = @()
-foreach ($path in $candidates) {
-    $safeRoot = Test-PathMatches $path $allowedRoots
-    $blocked = $false
-    foreach ($pattern in $blockedPatterns) { if ($path -match $pattern) { $blocked = $true; break } }
-    if ($Include.Count -gt 0 -and -not (Test-PathMatches $path $Include)) { $safeRoot = $false }
-    if ($Exclude.Count -gt 0 -and (Test-PathMatches $path $Exclude)) { $safeRoot = $false }
-    if ($safeRoot -and -not $blocked) { $selected += $path } else { $excluded += $path }
-}
+$selection = Select-PublishPaths $candidates $allowedRoots $blockedPatterns $Include $Exclude
+$selected = @($selection.Selected)
+$excluded = @($selection.Excluded)
 
 if ($selected.Count -eq 0) {
     Write-Host 'No eligible changes.'
@@ -177,13 +159,16 @@ try {
     if ($LASTEXITCODE -eq 0) {
         $baseRef = "refs/heads/$Branch"
     } else {
-        $remoteRef = git ls-remote --heads $Remote $Branch
+        $remoteRef = git ls-remote --heads $Remote "refs/heads/$Branch"
         if ($LASTEXITCODE -ne 0) { throw "Could not inspect $Remote/$Branch." }
-        if ($remoteRef) { $baseRef = "$Remote/$Branch" }
-        else { throw "Target branch '$Branch' does not exist locally or on '$Remote'." }
+        if ($remoteRef) {
+            Invoke-PublishGit @('fetch', '--no-tags', $Remote, "refs/heads/$Branch") "Could not fetch $Remote/$Branch."
+            $baseRef = (git rev-parse FETCH_HEAD).Trim()
+            if ($LASTEXITCODE -ne 0 -or -not $baseRef) { throw "Could not resolve fetched branch $Remote/$Branch." }
+        } else { throw "Target branch '$Branch' does not exist locally or on '$Remote'." }
     }
 
-    Invoke-GitChecked @('worktree', 'add', '--detach', $worktreeRoot, $baseRef) 'Could not create isolated publish worktree.'
+    Invoke-PublishGit @('worktree', 'add', '--detach', $worktreeRoot, $baseRef) 'Could not create isolated publish worktree.'
     $worktreeAdded = $true
     foreach ($path in $selected) {
         $source = Join-Path $stageRoot $path
@@ -199,7 +184,7 @@ try {
 
     Push-Location $worktreeRoot
     try {
-        Invoke-GitChecked @('add', '--', $selected) 'Could not stage selected paths in isolated worktree.'
+        Invoke-PublishGit @('add', '--', $selected) 'Could not stage selected paths in isolated worktree.'
         & git diff --cached --check
         if ($LASTEXITCODE -ne 0) { throw 'Staged diff has whitespace errors.' }
         $stagedPaths = @(git diff --cached --name-only)
@@ -208,15 +193,23 @@ try {
 
         $commitArgs = @('commit', '-m', $Message)
         if ($NoVerify) { $commitArgs += '--no-verify' }
-        Invoke-GitChecked $commitArgs 'Commit failed in isolated worktree.'
-        if ($Action -eq 'Push') {
-            Invoke-GitChecked @('push', $Remote, "HEAD:refs/heads/$Branch") "Push to $Remote/$Branch failed. The commit remains in the temporary worktree until cleanup."
-        }
+        Invoke-PublishGit $commitArgs 'Commit failed in isolated worktree.'
         $commit = git rev-parse HEAD
+        if ($Action -eq 'Push') {
+            & git push $Remote "HEAD:refs/heads/$Branch"
+            if ($LASTEXITCODE -ne 0) {
+                $savedRef = "refs/codex/publish/$commit"
+                git update-ref $savedRef $commit
+                throw "Push failed. Commit is saved locally as $savedRef."
+            }
+        } else {
+            $savedRef = "refs/codex/publish/$commit"
+            Invoke-PublishGit @('update-ref', $savedRef, $commit) 'Could not preserve local commit reference.'
+        }
     } finally { Pop-Location }
 
     if ($Action -eq 'Commit') {
-        Write-Host "Created local commit $commit in an isolated worktree (branch '$Branch' and current checkout unchanged)."
+        Write-Host "Created local commit $commit (saved under refs/codex/publish/$commit; current branch and checkout unchanged)."
     } else {
         Write-Host "Published $commit to $Remote/$Branch."
     }

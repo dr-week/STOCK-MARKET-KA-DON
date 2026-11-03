@@ -137,18 +137,19 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 
 ### Publish code changes
 
-On Windows, `pnpm publish` previews eligible changes. Choose preview, local commit, or commit-and-push, and optionally filter paths, branch, and remote:
+On Windows, the `repo:*` commands preview eligible changes by default. Use `repo:publish` as the flexible entry point; choose a scope, local commit, or push with options:
 
 ```powershell
-pnpm publish -- -Help
-pnpm publish -- -Include README.md,docs                 # preview selected paths
-pnpm publish -- -ChangeSet Changed                       # tracked + untracked changes
-pnpm publish -- -Action Commit -Include docs -Message "docs: update guide"
-pnpm publish -- -Action Push -Branch main -Remote origin -Include README.md,docs -Message "docs: refresh guides"
-pnpm publish -- -Action Push -Config scripts/publish.config.json
+pnpm repo:publish -- -Help
+pnpm repo:docs                                        # preview docs preset
+pnpm repo:publish -- -ChangeSet Changed               # tracked + untracked changes
+pnpm repo:commit -- -Include docs -Message "docs: update guide"
+pnpm repo:push -- -Branch main -Remote origin -Include README.md,docs -Message "docs: refresh guides"
+pnpm repo:publish -- -Action Push -Preset backend -Message "docs: update backend guide"
+pnpm repo:publish -- -Action Push -Preset docs -Message "docs: publish guide updates"
 ```
 
-The helper defaults to preview, uses the current branch and `origin`, and supports tracked/untracked/changed selections, include/exclude filters, and optional JSON config. Copy [the example config](scripts/publish.config.example.json) to `scripts/publish.config.json` for local defaults; local config is ignored by Git. Message, branch, and remote can also come from `SMKD_PUBLISH_MESSAGE`, `SMKD_PUBLISH_BRANCH`, and `SMKD_PUBLISH_REMOTE`. Databases, logs, credentials, generated build folders, and the `fast-framework` submodule stay blocked even when paths are requested. Review the preview before publishing; submodule changes must be published from that repository.
+The helper defaults to preview, uses the current branch and `origin`, and supports presets, tracked/untracked/changed selections, include/exclude filters, and optional JSON config. Copy [the example config](scripts/publish.config.example.json) to `scripts/publish.config.json` for local defaults; local config is ignored by Git. Databases, logs, credentials, generated build folders, and the `fast-framework` submodule stay blocked even when paths are requested. Read the [publishing workflow guide](docs/PUBLISH_WORKFLOW.md) for examples and configuration.
 
 ### Windows desktop app
 The Tauri desktop window runs the dashboard and starts its local backend quietly. The app does not require Python, Node.js, pnpm, or a project checkout on the target PC. On first launch it checks WebView2 and installs it silently if missing, then downloads a pinned `uv` tool, private Python runtime, and locked backend packages into the current user's local app data. Internet access is needed for first setup; later launches reuse the environment. The tested portable folder is about 9 MB, while the runtime and dependencies use about 360 MB after the temporary download cache is removed. Setup and backend logs are under `%LOCALAPPDATA%\com.dangerlabs.smkd\logs`.
