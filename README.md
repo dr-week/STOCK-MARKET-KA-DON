@@ -146,7 +146,6 @@ pnpm repo:publish -- -ChangeSet Changed               # tracked + untracked chan
 pnpm repo:commit -- -Include docs -Message "docs: update guide"
 pnpm repo:push -- -Branch main -Remote origin -Include README.md,docs -Message "docs: refresh guides"
 pnpm repo:publish -- -Action Push -Preset docs -Message "docs: publish guide updates"
-pnpm repo:publish -- -Action Push -Preset docs -Message "docs: publish guide updates"
 ```
 
 The helper defaults to preview, uses the current branch and `origin`, and supports presets, tracked/untracked/changed selections, include/exclude filters, and optional JSON config. Copy [the example config](scripts/publish.config.example.json) to `scripts/publish.config.json` for local defaults; local config is ignored by Git. Databases, logs, credentials, generated build folders, and the `fast-framework` submodule stay blocked even when paths are requested. Read the [publishing workflow guide](docs/PUBLISH_WORKFLOW.md) for examples and configuration.
@@ -170,7 +169,7 @@ npm run build     # Windows NSIS installer
 
 The downloadable launcher executable is [`launcher/Stock Market Ka Don.exe`](<launcher/Stock Market Ka Don.exe>), with a Windows shortcut beside it at [`launcher/SMKD Launcher.lnk`](<launcher/SMKD Launcher.lnk>). The shortcut opens the executable from the launcher folder. This is a portable launcher in the project folder, not an app installed in Windows Programs.
 
-To build a fresh portable folder, run `npm run portable` from `desktop/tauri`, then launch `desktop/tauri/portable/Stock Market Ka Don.exe`. The NSIS installer, when built, is written under `desktop/tauri/src-tauri/target/release/bundle/nsis/`. First-run Python and backend setup requires internet and several hundred MB of free disk space. See [the launcher setup notes](desktop/tauri/README.md) for more details.
+To build a fresh portable folder, run `npm run portable` from `desktop/tauri`, then launch `desktop/tauri/portable/Stock Market Ka Don.exe`. The NSIS installer, when built, is written under `desktop/tauri/src-tauri/target/release/bundle/nsis/`. First-run Python and backend setup requires internet and several hundred MB of free disk space. The launcher source and build scripts are in [`desktop/tauri`](desktop/tauri/).
 
 ### Native Android + Frontend Workflow
 Use the bundled scripts for a mobile-ready local setup:
