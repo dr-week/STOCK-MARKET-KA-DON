@@ -166,7 +166,7 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 - **Git**
 
 ### Automated Launch (Windows)
-Double-click the launcher. It starts the backend and frontend without persistent terminal windows, waits for the dashboard to respond, then opens it in your browser. Startup logs are written to `.runtime/launcher/` if troubleshooting is needed.
+Double-click the launcher. It prefers the backend virtual environment, starts the backend and frontend without persistent terminal windows, waits for both services to respond, then opens the dashboard in your browser. It uses pnpm when available and can start the locally installed Vite CLI directly when pnpm is not on `PATH`. Startup logs are written to `.runtime/launcher/` if troubleshooting is needed.
 
 ```powershell
 .\launcher\start.bat

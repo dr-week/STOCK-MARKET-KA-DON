@@ -96,10 +96,26 @@ def main() -> int:
     frontend_process = None
     if not responds(FRONTEND_URL, b"<title>SMKD"):
         pnpm = shutil.which("pnpm.cmd") or shutil.which("pnpm")
-        if not pnpm:
-            return startup_error("pnpm was not found. Install pnpm and try again.")
+        if pnpm:
+            frontend_command = [
+                "cmd.exe",
+                "/d",
+                "/s",
+                "/c",
+                f'"{pnpm}" dev --host 127.0.0.1 --strictPort',
+            ]
+        else:
+            node = shutil.which("node.exe") or shutil.which("node")
+            vite_cli = FRONTEND_DIR / "node_modules" / "vite" / "bin" / "vite.js"
+            if not node or not vite_cli.is_file():
+                return startup_error(
+                    "pnpm or installed frontend dependencies were not found. "
+                    "Install Node.js and run pnpm install in fast-framework."
+                )
+            frontend_command = [node, str(vite_cli), "--host", "127.0.0.1", "--strictPort"]
+
         frontend_process = start_hidden(
-            ["cmd.exe", "/d", "/s", "/c", f'"{pnpm}" dev --host 127.0.0.1 --strictPort'],
+            frontend_command,
             FRONTEND_DIR,
             RUNTIME_DIR / "frontend.log",
         )
