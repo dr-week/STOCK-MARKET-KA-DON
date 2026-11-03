@@ -1,7 +1,7 @@
 <div align="center">
 
 # ⚡ STOCK MARKET KA DON (SMKD)
-### High-Performance Algorithmic Trading Intelligence Engine for Indian Equities (NSE)
+### Experimental market-analysis dashboard for Indian equities (NSE)
 
 [![Danger Labs](https://img.shields.io/badge/Engineered%20By-Danger%20Labs-ff0055?style=for-the-badge&logo=shield&logoColor=white)](#-designed--engineered-by-danger-labs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
@@ -12,7 +12,7 @@
 [![NSE India](https://img.shields.io/badge/Exchange-NSE%20India-FF6B6B?style=for-the-badge)](https://www.nseindia.com)
 
 <p align="center">
-  <b>A production-grade, micro-latency market analysis engine and decision-support terminal built specifically for National Stock Exchange (NSE) equities, covering Intraday (MIS) and Positional Swing (CNC) executions.</b>
+  <b>A local dashboard for exploring stock scans, technical indicators, historical simulations and paper-trading workflows.</b>
 </p>
 
 [Key Features](#-key-features) • [System Architecture](#-system-architecture) • [Trading Strategies](#-trading-engine--strategy-matrix) • [Quick Start](#-quick-start--installation) • [API Reference](#-api-specification) • [Limitations & Disclaimer](#-limitations--known-constraints)
@@ -21,7 +21,7 @@
 
 </div>
 
-> **Verified implementation status (2026-11-02):** SMKD is an experimental NSE analysis dashboard, not a production-grade or proven prediction system. Its SystemOne output is deterministic rule scoring, not a trained model; market-data freshness is not guaranteed; and the UI can show sample rows when the API fails. Some feature descriptions below may be aspirational rather than implemented. See [the verified product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [documentation index](docs/INDEX.md) for current behavior and gaps.
+> **Verified implementation status (2026-11-03):** SMKD is an experimental NSE analysis dashboard, not a proven prediction system. Signal output uses deterministic rule scoring; market-data freshness is not guaranteed, and some UI paths can show sample rows when the API fails. The feature list below describes implemented capabilities and links to their limitations. See [the verified product and technical roadmap](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [documentation index](docs/INDEX.md) for current behavior and gaps.
 
 ## 🏢 Designed & Engineered by Danger Labs
 
@@ -75,69 +75,57 @@ All market-data, signal-generation, and trading-related changes must preserve th
 
 ## 📌 Executive Summary
 
-**SMKD** solves the core challenges faced by active retail and prop traders in Indian markets: execution lag, cognitive overload, emotional whipsaws, and scam-ridden signal services that ignore market friction and repainting. 
+**SMKD** is an experimental stock-analysis dashboard. It combines a configured NSE stock scanner, technical indicators, estimated risk levels, market headlines, historical backtesting and paper-trading tools in a local web application.
 
-By unifying **closed-candle mathematical indicators**, **live Indian financial news sentiment NLP**, **automated risk-to-reward boundary calculations**, and a **custom zero-VDOM fine-grained reactive terminal (Zuari Framework)**, SMKD delivers institutional-grade trade setups directly linked to broker execution cards (Groww MIS/CNC).
+The scanner uses deterministic rules and third-party market data. It is not a validated prediction system, does not provide investment advice, and does not place broker orders. Read [what the data and signals mean](stock-signal-bot/README.md#what-is-and-is-not-trustworthy) before relying on any displayed result.
 
 ---
 
 ## 🌟 Key Features
 
-| Capability | Specification | Architectural Highlight |
+| Capability | What is implemented | Important limitation |
 |:---|:---|:---|
-| **Intraday Engine (MIS)** | 5-Minute Timeframe Multi-Indicator Confluence | VWAP + 9/21 Dual EMA + 14-period RSI + ATR Dynamic Volatility Bands |
-| **Delivery Engine (CNC)** | Daily / Multi-Week Positional Swing Scanner | Golden/Death Crossover (20/50 EMA), Volume Accumulation & Stage-2 Breakouts |
-| **News Catalyst NLP** | Live Real-time Sentiment Scraper | RSS pipeline parsing Indian business feeds (Moneycontrol, Mint, ET) with tone scoring |
-| **Zero-VDOM UI Terminal** | Built on Danger Labs' `@zuari` signals system | Sub-millisecond reactive DOM mutations without the overhead of heavy Virtual-DOM engines |
-| **Trap Avoidance Engine** | Strict IST Market Session Filter | Flags 9:15–9:45 AM opening traps and blocks low-liquidity noon chop zones |
-| **One-Click Broker Deep Links**| Instant Contextual Execution Linkage | Directly opens pre-configured symbol order cards on Groww Web/Mobile |
+| **Intraday stock scanner** | Deterministic scoring of configured NSE stocks from 5-minute OHLCV data using market structure, VWAP, EMA alignment, relative volume and momentum. | Experimental heuristic; provider timestamps and in-progress candles are not reliably validated. See [backend README](stock-signal-bot/README.md#the-active-intraday-scoring-model). |
+| **Technical analysis and risk levels** | RSI, EMA, VWAP, ATR, ADX/DI, volume, price-structure and zone calculations with candidate entry, stop and target levels. | Calculations are correlated inputs from the same feed; levels are not predictions or guarantees. |
+| **Market-data and research tools** | Candle normalization, local replay fixtures, history storage, feed-health diagnostics and a backtest that reuses production signal/risk logic. | Yahoo Finance availability/delay varies; backtest coverage and cost estimates are limited. |
+| **Paper trading and feedback** | Local paper-order ledger, position/P&L views, optional automation and feedback recording/summary endpoints. | Paper trades do not place real broker orders and do not establish live profitability. |
+| **News and broker links** | Keyword-tagged Google News RSS headlines and links that open external Groww stock pages. | News is not part of the active score; the app does not execute Groww orders or use a live Groww/NSE feed. |
+| **Web dashboard** | Vite frontend in `fast-framework/packages/stock-bot-ui`, built on the Zuari packages. | Some UI paths may show sample rows after API failure; do not treat them as live data. |
 
 ---
 
 ## 🏗️ System Architecture
 
-SMKD is engineered as an event-driven decoupled ecosystem:
+The current data and presentation flow is:
 
 ```mermaid
 flowchart TD
-    subgraph MarketData ["NSE Market Feeds"]
+    subgraph MarketData ["External and local data"]
         direction TB
-        NSE["Live Ticker Feed (NSE .NS)"]
-        NEWS["Financial News RSS Feeds"]
+        Yahoo["Yahoo Finance chart data"]
+        Replay["Local replay fixtures"]
+        News["Google News RSS headlines"]
     end
 
-    subgraph Backend ["SMKD Quantitative Core (FastAPI / Python)"]
+    subgraph Backend ["SMKD backend (FastAPI / Python)"]
         direction TB
-        Fetcher["Market Fetcher & Normalizer"]
-        Sessions["IST Session & Trap Evaluator"]
-        Technicals["Pure Math Engine (VWAP, EMA, RSI, ATR)"]
-        NLP["Sentiment & Catalyst Engine"]
-        Calculator["Risk-Reward & Capital Sizing Matrix"]
-        Router["Lean Async REST API (/api/v1)"]
+        Fetcher["Fetch, normalize and validate candles"]
+        Analysis["Technical analysis and deterministic scoring"]
+        Research["Backtesting, paper trading and feedback"]
+        API["FastAPI (/api)"]
     end
 
-    subgraph Frontend ["Zuari Zero-VDOM Reactive Terminal (TypeScript)"]
+    subgraph Frontend ["Vite dashboard (TypeScript)"]
         direction TB
-        SignalsStore["Zuari Fine-Grained Reactive Signals"]
-        UI_Intraday["⚡ Intraday Card (MIS)"]
-        UI_Delivery["📦 Positional Card (CNC)"]
-        UI_News["📰 Catalyst Sentiment Stream"]
+        UI["Scanner, analysis and research views"]
     end
 
-    subgraph Execution ["Direct Execution"]
-        Groww["Groww Terminal Direct Deep-Link"]
-    end
-
-    NSE --> Fetcher
-    NEWS --> NLP
-    Fetcher --> Sessions --> Technicals --> Calculator --> Router
-    NLP --> Calculator
-    Router --> SignalsStore
-    SignalsStore --> UI_Intraday
-    SignalsStore --> UI_Delivery
-    SignalsStore --> UI_News
-    UI_Intraday --> Groww
-    UI_Delivery --> Groww
+    Yahoo --> Fetcher
+    Replay --> Fetcher
+    Fetcher --> Analysis --> API
+    Analysis --> Research
+    News --> API
+    API --> UI
 ```
 
 ### Directory Structure
@@ -150,40 +138,22 @@ flowchart TD
 │   ├── launch.py               # Synchronized dual-stack process orchestration
 │   └── start.bat               # Single-click Windows deployment script
 └── stock-signal-bot/           # Quantitative signal engine core
-    ├── backend/app/            # FastAPI analytical server
-    │   ├── api/                # Endpoints (/api/intraday, /api/delivery, /api/news)
-    │   ├── core/               # Universe configuration (Nifty 100 constituent list)
-    │   ├── indicators/         # Pure vectorized mathematical indicators
-    │   ├── market/             # Market hours validation & candle aggregation
-    │   ├── news/               # Live Indian market RSS aggregator & sentiment analyzer
-    │   └── strategies/         # Mathematical confluence scoring algorithms
-    └── docs/                   # Institutional trading manuals & design documentation
+    ├── backend/app/            # FastAPI analysis and research server
+    │   ├── api/                # Scan, paper, feedback, history and system routes
+    │   ├── departments/        # Market data, technical analysis and risk services
+    │   ├── indicators/         # Indicator, profitability and sizing calculations
+    │   ├── backtesting/        # Historical simulation and performance metrics
+    │   └── tests/              # Unit, contract and integration tests
+    └── docs/                   # API specification and product documentation
 ```
 
 ---
 
-## 📊 Trading Engine & Strategy Matrix
+## 📊 Current signal model
 
-### 1. Intraday Momentum Strategy (`Groww MIS`)
-* **Timeframe**: 5-Minute closed candles (Strict anti-repainting policy).
-* **Confluence Rules**:
-  * **Long Entry**: Price > VWAP, 9-EMA > 21-EMA, RSI between 55 and 70 (Momentum acceleration without exhaustion).
-  * **Short Entry**: Price < VWAP, 9-EMA < 21-EMA, RSI between 30 and 45.
-* **Risk Parameters**:
-  * Automated stop-loss pegged to recent swing extremes or $1.5 \times \text{ATR}$.
-  * Mandatory minimum Target:Risk ratio of **1:2** to guarantee positive expectancy.
+The active scan uses a deterministic score with seven rule groups and 10 possible points: market structure (2), supply/demand or key-candle confirmation (2), price vs VWAP (2), EMA 9/21 alignment (1), relative volume (1), momentum (1), and Nifty 50 direction (1). BUY/SELL candidates require at least 7 points plus a risk/reward check. See the [full model description and limitations](stock-signal-bot/README.md#the-active-intraday-scoring-model).
 
-### 2. Positional Swing Strategy (`Groww CNC`)
-* **Timeframe**: Daily candle confirmation.
-* **Confluence Rules**:
-  * 20-Day EMA above 50-Day EMA (Golden Trend Confirmation).
-  * Volume expansion > $1.5 \times$ 20-day average volume during breakout sessions.
-* **Holding Horizon**: 3 to 15 trading days.
-
-### 3. Anti-Scam & Risk Management Guardrails
-* **No Unrealistic Claims**: High-frequency quant funds run between **55% to 65% win rates**. Anyone claiming 90%+ is selling curve-fitted or repainting algorithms.
-* **Friction Awareness**: Filters out all micro-moves $< 0.7\%$ to guarantee trades remain profitable after STT, GST (18%), exchange turnover fees, SEBI charges, and broker commission.
-* **Liquid Universe Only**: Scans only **F&O eligible constituent stocks** (Nifty 100) to protect capital against illiquid 5% circuit freezes and auction penalties.
+Daily data and other dashboard indicators may be displayed but do not necessarily contribute to the active intraday score. News sentiment is not included in the score. This model has not been calibrated to predict success and does not guarantee positive expectancy. Groww integration provides external links; it does not place orders.
 
 ---
 
@@ -223,7 +193,7 @@ cd STOCK-MARKET-KA-DON
 #### Step 2: Start Quantitative Backend
 ```bash
 cd stock-signal-bot/backend
-python -m pip install -r requirements.txt # (or install: fastapi uvicorn yfinance requests beautifulsoup4)
+python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --port 8000
 ```
 > The API will be available at `http://127.0.0.1:8000` with interactive Swagger docs at `http://127.0.0.1:8000/docs`.
@@ -243,10 +213,14 @@ pnpm run dev
 
 | Endpoint | Method | Description |
 |:---|:---|:---|
-| `/api/intraday` | `GET` | Returns 5-minute MIS momentum signals, entry prices, SL, T1, T2, and reasoning. |
-| `/api/delivery` | `GET` | Returns daily CNC swing setups with trend ratings and volume metrics. |
-| `/api/news` | `GET` | Returns live curated market catalysts and sentiment classifications. |
-| `/api/market-status` | `GET` | Returns Indian standard time market phase (Pre-open, Trap, Active, Post-close). |
+| `/api/overview` | `GET` | Dashboard overview and market summary. |
+| `/api/scan` | `GET` | Scan the configured stock universe. |
+| `/api/stock/{symbol}` | `GET` | Analysis for one symbol. |
+| `/api/backtest/{symbol}` | `GET` | Historical strategy simulation (research only). |
+| `/api/paper/positions`, `/api/paper/history`, `/api/paper/pnl` | `GET` | Paper-trading positions, history and P&L. |
+| `/docs` | `GET` | FastAPI interactive API documentation. |
+
+For the full route list, use `/docs` while the backend is running; routes can change as the project evolves.
 
 ---
 
