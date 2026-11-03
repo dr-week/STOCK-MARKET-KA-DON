@@ -1,201 +1,229 @@
 [CmdletBinding()]
 param(
-    [Parameter(Position = 0)]
-    [string]$Message = $env:SMKD_PUBLISH_MESSAGE,
-
-    [ValidateSet('Preview', 'Commit', 'Push')]
-    [string]$Action = 'Preview',
-
+    [Parameter(Position = 0)] [string]$Message = $env:SMKD_PUBLISH_MESSAGE,
+    [ValidateSet('Preview', 'Commit', 'Push')] [string]$Action = 'Preview',
     [string]$Remote = $(if ($env:SMKD_PUBLISH_REMOTE) { $env:SMKD_PUBLISH_REMOTE } else { 'origin' }),
     [string]$Branch = $env:SMKD_PUBLISH_BRANCH,
-
+    [ValidateSet('All', 'Tracked', 'Untracked', 'Changed')]
+    [string]$ChangeSet = 'All',
     [string[]]$Include = @(),
     [string[]]$Exclude = @(),
-
+    [string]$Config = '',
     [switch]$AllAllowed,
-    [switch]$AllowPreStaged,
-    [switch]$Help,
-
-    [Parameter(ValueFromRemainingArguments = $true)]
-    [string[]]$ExtraArgs = @()
+    [switch]$NoVerify,
+    [switch]$Help
 )
-
-# npm/pnpm can append arguments after `--`; merge them with named parameters.
-if ($ExtraArgs.Count -gt 0) {
-    $parsed = @{}
-    for ($i = 0; $i -lt $ExtraArgs.Count; $i++) {
-        $token = $ExtraArgs[$i]
-        if ($token -notmatch '^-(\w+)$') { throw "Unexpected argument: $token" }
-        $key = $Matches[1]
-        if ($key -in @('AllAllowed', 'AllowPreStaged', 'Help')) {
-            $parsed[$key] = $true
-        } else {
-            if (($i + 1) -ge $ExtraArgs.Count -or $ExtraArgs[$i + 1] -match '^-(\w+)$') {
-                throw "Argument -$key needs a value."
-            }
-            $parsed[$key] = $ExtraArgs[++$i]
-        }
-    }
-    if ($parsed.ContainsKey('Message')) { $Message = $parsed.Message }
-    if ($parsed.ContainsKey('Action')) { $Action = $parsed.Action }
-    if ($parsed.ContainsKey('Remote')) { $Remote = $parsed.Remote }
-    if ($parsed.ContainsKey('Branch')) { $Branch = $parsed.Branch }
-    if ($parsed.ContainsKey('Include')) { $Include = @($parsed.Include -split '[,;]') }
-    if ($parsed.ContainsKey('Exclude')) { $Exclude = @($parsed.Exclude -split '[,;]') }
-    if ($parsed.ContainsKey('AllAllowed')) { $AllAllowed = $true }
-    if ($parsed.ContainsKey('AllowPreStaged')) { $AllowPreStaged = $true }
-    if ($parsed.ContainsKey('Help')) { $Help = $true }
-}
 
 $ErrorActionPreference = 'Stop'
 
-if ($Help) {
+function Show-Help {
     @'
-SMKD publisher
+SMKD publisher (PowerShell)
 
 Usage:
-  pnpm publish                                  Preview eligible changes
-  pnpm publish -- -Action Push -Message "docs: refresh README"
-  pnpm publish -- -Include README.md,docs       Preview only selected paths
-  pnpm publish -- -Action Commit -Include docs  Commit selected paths locally
-  pnpm publish -- -Action Push -AllAllowed      Commit and push all allowed changes
+  pnpm publish -- -Help
+  pnpm publish -- -Include README.md,docs
+  pnpm publish -- -Action Commit -Include docs -Message "docs: update guides"
+  pnpm publish -- -Action Push -ChangeSet Changed -Message "fix: update scanner"
+  pnpm publish -- -Action Push -Config scripts/publish.config.json
 
 Options:
-  -Action Preview|Commit|Push  Preview, make a local commit, or commit and push
-  -Message TEXT               Commit message (or SMKD_PUBLISH_MESSAGE)
-  -Branch NAME                Target branch (defaults to the current branch)
-  -Remote NAME                Git remote (default: origin; or SMKD_PUBLISH_REMOTE)
-  -Include PATHS              Limit candidates to these repo-relative paths
-  -Exclude PATHS              Exclude additional repo-relative paths
-  -AllAllowed                 Include all configured safe source roots
-  -AllowPreStaged             Permit already-staged paths if they pass safety checks
+  -Action Preview|Commit|Push     Preview, commit locally, or commit and push
+  -Message TEXT                  Commit message; may use SMKD_PUBLISH_MESSAGE
+  -Remote NAME -Branch NAME      Destination; defaults to origin/current branch
+  -ChangeSet All|Tracked|Untracked|Changed
+                                 Choose modified, new, or all working-tree paths
+  -Include PATHS -Exclude PATHS  Repo-relative path filters (comma/semicolon lists)
+  -Config FILE                   Optional JSON defaults; see publish.config.example.json
+  -AllAllowed                    Scan safe roots whether modified or not (tracked files only)
+  -NoVerify                      Skip Git hooks (normally keep hooks enabled)
 
-Safe source roots are configured in scripts/publish.ps1. Databases, logs, secrets,
-build output, and the fast-framework submodule are always excluded.
+All modes always reject secrets, databases, logs, generated outputs, and the
+fast-framework submodule. Use Preview first; the regular Git index is preserved.
 '@ | Write-Host
-    exit 0
 }
+
+function Normalize-Paths([string[]]$Paths) {
+    return @($Paths | ForEach-Object { $_.Replace('\', '/').Trim().Trim('/') } | Where-Object { $_ })
+}
+
+function Test-PathMatches([string]$Path, [string[]]$Rules) {
+    foreach ($rule in $Rules) {
+        if ($rule -match '[*?\[]') {
+            if ($Path -like $rule) { return $true }
+        } elseif ($Path -eq $rule -or $Path.StartsWith("$rule/", [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Invoke-GitChecked([string[]]$GitArgs, [string]$Failure) {
+    & git @GitArgs
+    if ($LASTEXITCODE -ne 0) { throw $Failure }
+}
+
+if ($Help) { Show-Help; exit 0 }
 
 $repoRoot = (git rev-parse --show-toplevel).Trim()
-if ($LASTEXITCODE -ne 0 -or -not $repoRoot) {
-    throw 'Run this script from inside the SMKD Git repository.'
-}
+if ($LASTEXITCODE -ne 0 -or -not $repoRoot) { throw 'Run inside the SMKD Git repository.' }
 Set-Location -LiteralPath $repoRoot
 
-# Safe root-repository paths. Add a root here when the project layout changes.
+$configData = @{}
+if (-not $Config) { $Config = 'scripts/publish.config.json' }
+if (-not [System.IO.Path]::IsPathRooted($Config)) { $Config = Join-Path $repoRoot $Config }
+if (Test-Path -LiteralPath $Config) {
+    try {
+        $configObject = Get-Content -LiteralPath $Config -Raw | ConvertFrom-Json
+        foreach ($property in $configObject.PSObject.Properties) { $configData[$property.Name] = $property.Value }
+    }
+    catch { throw "Invalid publisher JSON config '$Config': $($_.Exception.Message)" }
+}
+
 $allowedRoots = @(
     'README.md', 'DOCS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'AGENTS.md',
     '.gitignore', '.gitmodules', 'package.json', 'pnpm-lock.yaml',
     'capacitor.config.json', 'android', 'desktop', 'docs', 'launcher',
     'scripts', 'stock-signal-bot', '.github'
 )
+if ($configData.allowedRoots) { $allowedRoots = @($configData.allowedRoots) }
+$allowedRoots = Normalize-Paths $allowedRoots
+
+$blockedPatterns = @(
+    '(^|/)(\.env($|\.)|secrets?($|/)|credentials?($|/))',
+    '(?i)(^|/)[^/]*\.(db|sqlite|sqlite3|log|pem|key|pfx|p12)$',
+    '(^|/)(node_modules|target|portable|bundle|\.venv|venv|__pycache__|\.runtime)(/|$)',
+    '(^|/)fast-framework(/|$)'
+)
+if ($configData.blockedPatterns) { $blockedPatterns += @($configData.blockedPatterns) }
+
+if ($configData.remote -and $Remote -eq 'origin' -and -not $env:SMKD_PUBLISH_REMOTE) { $Remote = $configData.remote }
+if ($configData.branch -and -not $Branch) { $Branch = $configData.branch }
+if ($configData.changeSet -and $ChangeSet -eq 'All') { $ChangeSet = $configData.changeSet }
+if ($Include.Count -eq 0 -and $configData.include) { $Include = @($configData.include) }
+if ($Exclude.Count -eq 0 -and $configData.exclude) { $Exclude = @($configData.exclude) }
+if (-not $Message -and $configData.message) { $Message = $configData.message }
+$Include = Normalize-Paths $Include
+$Exclude = Normalize-Paths $Exclude
 
 if (-not $Remote.Trim()) { throw 'Remote name cannot be empty.' }
 $remoteUrl = git remote get-url $Remote 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $remoteUrl) { throw "Git remote '$Remote' was not found." }
-
 if (-not $Branch) { $Branch = (git branch --show-current).Trim() }
-if (-not $Branch) { throw 'Cannot publish from detached HEAD. Specify -Branch explicitly.' }
+if (-not $Branch) { throw 'Detached HEAD: specify -Branch.' }
+
+$staged = @(git diff --cached --name-only --diff-filter=ACDMRTUXB)
+if ($staged.Count -gt 0) {
+    $staged | ForEach-Object { Write-Host "Already staged: $_" }
+    throw 'Pre-staged changes detected. Unstage them or commit them separately, then retry.'
+}
 
 $tracked = @(git diff --name-only --diff-filter=ACDMRTUXB)
-$unstagedCandidates = @($tracked + @(git ls-files --others --exclude-standard) | Sort-Object -Unique)
-$preStaged = @(git diff --cached --name-only --diff-filter=ACDMRTUXB)
-
-if ($preStaged.Count -gt 0 -and -not $AllowPreStaged) {
-    $preStaged | ForEach-Object { Write-Host "Already staged: $_" }
-    throw 'There are pre-staged changes. Commit them separately or pass -AllowPreStaged after reviewing them.'
+$untracked = @(git ls-files --others --exclude-standard)
+switch ($ChangeSet) {
+    'Tracked' { $candidates = @($tracked) }
+    'Untracked' { $candidates = @($untracked) }
+    'Changed' { $candidates = @($tracked + $untracked) }
+    default { $candidates = @($tracked + $untracked) }
 }
-
-$candidates = @($unstagedCandidates)
-if ($AllowPreStaged) { $candidates = @($candidates + $preStaged | Sort-Object -Unique) }
-
-if ($Include.Count -gt 0) {
-    $includePaths = @($Include | ForEach-Object { $_.Replace('\\', '/').TrimEnd('/') })
-    $candidates = @($candidates | Where-Object {
-        $candidate = $_
-        @($includePaths | Where-Object { $candidate -eq $_ -or $candidate.StartsWith("$_/", [System.StringComparison]::OrdinalIgnoreCase) }).Count -gt 0
-    })
-} elseif (-not $AllAllowed) {
-    # Default selection is current change set intersected with known safe roots.
+if ($AllAllowed) {
+    $allTracked = @(git ls-files)
+    $candidates = @($candidates + $allTracked | Sort-Object -Unique)
 }
+$candidates = @($candidates | Sort-Object -Unique)
 
-if ($Exclude.Count -gt 0) {
-    $excludePaths = @($Exclude | ForEach-Object { $_.Replace('\\', '/').TrimEnd('/') })
-    $candidates = @($candidates | Where-Object {
-        $candidate = $_
-        @($excludePaths | Where-Object { $candidate -eq $_ -or $candidate.StartsWith("$_/", [System.StringComparison]::OrdinalIgnoreCase) }).Count -eq 0
-    })
-}
-
-$selected = @()
-$excluded = @()
+$selected = @(); $excluded = @()
 foreach ($path in $candidates) {
-    $safe = $false
-    foreach ($root in $allowedRoots) {
-        if ($path -eq $root -or $path.StartsWith("$root/", [System.StringComparison]::OrdinalIgnoreCase)) {
-            $safe = $true
-            break
-        }
-    }
-
-    if ($path -match '(^|/)(\.env($|\.)|secrets?($|/)|credentials?($|/))' -or
-        $path -match '(?i)(^|/)[^/]*\.(db|sqlite|sqlite3|log|pem|key)$' -or
-        $path -match '(^|/)(node_modules|target|portable|bundle|\.venv|venv|__pycache__)(/|$)' -or
-        $path -match '(^|/)fast-framework(/|$)') {
-        $safe = $false
-    }
-
-    if ($safe) { $selected += $path } else { $excluded += $path }
+    $safeRoot = Test-PathMatches $path $allowedRoots
+    $blocked = $false
+    foreach ($pattern in $blockedPatterns) { if ($path -match $pattern) { $blocked = $true; break } }
+    if ($Include.Count -gt 0 -and -not (Test-PathMatches $path $Include)) { $safeRoot = $false }
+    if ($Exclude.Count -gt 0 -and (Test-PathMatches $path $Exclude)) { $safeRoot = $false }
+    if ($safeRoot -and -not $blocked) { $selected += $path } else { $excluded += $path }
 }
 
 if ($selected.Count -eq 0) {
-    Write-Host 'No eligible source or documentation changes to publish.'
-    if ($excluded.Count -gt 0) {
-        Write-Host 'Excluded by allowlist or safety rules:'
-        $excluded | ForEach-Object { Write-Host "  - $_" }
+    Write-Host 'No eligible changes.'
+    if ($excluded.Count -gt 0) { Write-Host ('Excluded: ' + ($excluded -join ', ')) }
+    exit 0
+}
+
+Write-Host "Action: $Action | Changes: $ChangeSet | Remote: $Remote | Branch: $Branch"
+Write-Host ('Selected: ' + ($selected -join ', '))
+if ($excluded.Count -gt 0) { Write-Host ('Excluded: ' + ($excluded -join ', ')) }
+if ($Action -eq 'Preview') { Write-Host 'Preview only. Use -Action Commit or -Action Push to publish.'; exit 0 }
+if (-not $Message -or -not $Message.Trim()) { throw 'A commit message is required (-Message or SMKD_PUBLISH_MESSAGE).' }
+
+# Prepare selected file contents outside the repo, then commit in an isolated worktree.
+$stageRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("smkd-publish-stage-{0}" -f [guid]::NewGuid())
+$worktreeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("smkd-publish-worktree-{0}" -f [guid]::NewGuid())
+$worktreeAdded = $false
+try {
+    New-Item -ItemType Directory -Path $stageRoot | Out-Null
+    foreach ($path in $selected) {
+        $source = Join-Path $repoRoot $path
+        $stagedCopy = Join-Path $stageRoot $path
+        if (Test-Path -LiteralPath $source -PathType Leaf) {
+            $parentDir = Split-Path -Parent $stagedCopy
+            if ($parentDir) { New-Item -ItemType Directory -Force -Path $parentDir | Out-Null }
+            Copy-Item -LiteralPath $source -Destination $stagedCopy
+        } elseif (-not (Test-Path -LiteralPath $source)) {
+            # A missing tracked path represents a deletion.
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $stagedCopy) | Out-Null
+        }
     }
-    exit 0
+
+    $branchExists = git show-ref --verify --quiet "refs/heads/$Branch"
+    if ($LASTEXITCODE -eq 0) {
+        $baseRef = "refs/heads/$Branch"
+    } else {
+        $remoteRef = git ls-remote --heads $Remote $Branch
+        if ($LASTEXITCODE -ne 0) { throw "Could not inspect $Remote/$Branch." }
+        if ($remoteRef) { $baseRef = "$Remote/$Branch" }
+        else { throw "Target branch '$Branch' does not exist locally or on '$Remote'." }
+    }
+
+    Invoke-GitChecked @('worktree', 'add', '--detach', $worktreeRoot, $baseRef) 'Could not create isolated publish worktree.'
+    $worktreeAdded = $true
+    foreach ($path in $selected) {
+        $source = Join-Path $stageRoot $path
+        $destination = Join-Path $worktreeRoot $path
+        if (Test-Path -LiteralPath $source -PathType Leaf) {
+            $parentDir = Split-Path -Parent $destination
+            if ($parentDir) { New-Item -ItemType Directory -Force -Path $parentDir | Out-Null }
+            Copy-Item -LiteralPath $source -Destination $destination -Force
+        } else {
+            Remove-Item -LiteralPath $destination -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    Push-Location $worktreeRoot
+    try {
+        Invoke-GitChecked @('add', '--', $selected) 'Could not stage selected paths in isolated worktree.'
+        & git diff --cached --check
+        if ($LASTEXITCODE -ne 0) { throw 'Staged diff has whitespace errors.' }
+        $stagedPaths = @(git diff --cached --name-only)
+        if (@($stagedPaths | Where-Object { $_ -notin $selected }).Count -gt 0) { throw 'Unexpected paths entered the isolated commit.' }
+        if ($stagedPaths.Count -eq 0) { throw 'Selected paths have no differences from the destination branch.' }
+
+        $commitArgs = @('commit', '-m', $Message)
+        if ($NoVerify) { $commitArgs += '--no-verify' }
+        Invoke-GitChecked $commitArgs 'Commit failed in isolated worktree.'
+        if ($Action -eq 'Push') {
+            Invoke-GitChecked @('push', $Remote, "HEAD:refs/heads/$Branch") "Push to $Remote/$Branch failed. The commit remains in the temporary worktree until cleanup."
+        }
+        $commit = git rev-parse HEAD
+    } finally { Pop-Location }
+
+    if ($Action -eq 'Commit') {
+        Write-Host "Created local commit $commit in an isolated worktree (branch '$Branch' and current checkout unchanged)."
+    } else {
+        Write-Host "Published $commit to $Remote/$Branch."
+    }
+} finally {
+    if ($worktreeAdded) {
+        git worktree remove --force $worktreeRoot 2>$null
+        if ($LASTEXITCODE -ne 0) { Write-Warning "Could not remove temporary worktree: $worktreeRoot" }
+    }
+    Remove-Item -LiteralPath $stageRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
-
-Write-Host "Action: $Action | Remote: $Remote | Branch: $Branch"
-Write-Host 'Files selected:'
-$selected | ForEach-Object { Write-Host "  + $_" }
-if ($excluded.Count -gt 0) {
-    Write-Host 'Excluded by allowlist or safety rules:'
-    $excluded | ForEach-Object { Write-Host "  - $_" }
-}
-
-if ($Action -eq 'Preview') {
-    Write-Host ''
-    Write-Host 'Preview only. Example publish command:'
-    Write-Host '  pnpm publish -- -Action Push -Message "docs: update guide"'
-    exit 0
-}
-
-if (-not $Message -or -not $Message.Trim()) {
-    throw 'Provide -Message "type: concise description" or set SMKD_PUBLISH_MESSAGE.'
-}
-
-git add -- $selected
-if ($LASTEXITCODE -ne 0) { throw 'git add failed.' }
-git diff --cached --check
-if ($LASTEXITCODE -ne 0) { throw 'Staged diff has whitespace errors; nothing was committed.' }
-
-$stagedPaths = @(git diff --cached --name-only)
-$unexpected = @($stagedPaths | Where-Object { $_ -notin $selected })
-if ($unexpected.Count -gt 0) {
-    throw "Unexpected paths are staged; review and unstage them before retrying: $($unexpected -join ', ')"
-}
-
-git commit -m $Message
-if ($LASTEXITCODE -ne 0) { throw 'git commit failed.' }
-
-if ($Action -eq 'Commit') {
-    Write-Host "Committed locally on '$Branch'; push was not requested."
-    exit 0
-}
-
-git push $Remote "HEAD:$Branch"
-if ($LASTEXITCODE -ne 0) { throw "Push failed. The commit remains local; inspect Git status and retry after resolving the push error." }
-
-Write-Host "Published commit to $Remote/$Branch."

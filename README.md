@@ -137,13 +137,18 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 
 ### Publish code changes
 
-On Windows, preview eligible source and documentation changes with `pnpm publish`. When the file list looks right, publish them with a short commit message:
+On Windows, `pnpm publish` previews eligible changes. Choose preview, local commit, or commit-and-push, and optionally filter paths, branch, and remote:
 
 ```powershell
-pnpm publish:now -- "docs: update setup guide"
+pnpm publish -- -Help
+pnpm publish -- -Include README.md,docs                 # preview selected paths
+pnpm publish -- -ChangeSet Changed                       # tracked + untracked changes
+pnpm publish -- -Action Commit -Include docs -Message "docs: update guide"
+pnpm publish -- -Action Push -Branch main -Remote origin -Include README.md,docs -Message "docs: refresh guides"
+pnpm publish -- -Action Push -Config scripts/publish.config.json
 ```
 
-The helper commits and pushes to the current branch. It excludes databases, logs, credentials, generated build folders, and the `fast-framework` submodule. Review the preview each time; changes inside the submodule must be published from its own repository.
+The helper defaults to preview, uses the current branch and `origin`, and supports tracked/untracked/changed selections, include/exclude filters, and optional JSON config. Copy [the example config](scripts/publish.config.example.json) to `scripts/publish.config.json` for local defaults; local config is ignored by Git. Message, branch, and remote can also come from `SMKD_PUBLISH_MESSAGE`, `SMKD_PUBLISH_BRANCH`, and `SMKD_PUBLISH_REMOTE`. Databases, logs, credentials, generated build folders, and the `fast-framework` submodule stay blocked even when paths are requested. Review the preview before publishing; submodule changes must be published from that repository.
 
 ### Windows desktop app
 The Tauri desktop window runs the dashboard and starts its local backend quietly. The app does not require Python, Node.js, pnpm, or a project checkout on the target PC. On first launch it checks WebView2 and installs it silently if missing, then downloads a pinned `uv` tool, private Python runtime, and locked backend packages into the current user's local app data. Internet access is needed for first setup; later launches reuse the environment. The tested portable folder is about 9 MB, while the runtime and dependencies use about 360 MB after the temporary download cache is removed. Setup and backend logs are under `%LOCALAPPDATA%\com.dangerlabs.smkd\logs`.

@@ -58,6 +58,7 @@ stock-signal-bot/backend/app/data/research/
 
 # Runtime diagnostics (generated logs, crash bundles)
 .runtime/
+scripts/publish.config.json
 *.log
 *.err.log
 stock-signal-bot/backend/app/data/*.db

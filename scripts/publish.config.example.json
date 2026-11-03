@@ -1,0 +1,27 @@
+{
+  "remote": "origin",
+  "branch": "main",
+  "changeSet": "All",
+  "allowedRoots": [
+    "README.md",
+    "DOCS.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    ".gitignore",
+    ".gitmodules",
+    "package.json",
+    "pnpm-lock.yaml",
+    "capacitor.config.json",
+    "android",
+    "desktop",
+    "docs",
+    "launcher",
+    "scripts",
+    "stock-signal-bot",
+    ".github"
+  ],
+  "include": [],
+  "exclude": [],
+  "blockedPatterns": [],
+  "message": ""
+}
