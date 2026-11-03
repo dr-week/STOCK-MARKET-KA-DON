@@ -168,7 +168,9 @@ npm run portable  # build an unpacked, directly runnable Windows folder
 npm run build     # Windows NSIS installer
 ```
 
-The portable app folder is `desktop/tauri/portable/`; run `Stock Market Ka Don.exe` from that folder. It is not installed in Windows Programs. The NSIS installer, when built, is written under `desktop/tauri/src-tauri/target/release/bundle/nsis/`. Both run without developer tools on the target PC. First-run Python and backend setup requires internet and several hundred MB of free disk space.
+The downloadable launcher executable is [`launcher/Stock Market Ka Don.exe`](<launcher/Stock Market Ka Don.exe>), with a Windows shortcut beside it at [`launcher/SMKD Launcher.lnk`](<launcher/SMKD Launcher.lnk>). The shortcut opens the executable from the launcher folder. This is a portable launcher in the project folder, not an app installed in Windows Programs.
+
+To build a fresh portable folder, run `npm run portable` from `desktop/tauri`, then launch `desktop/tauri/portable/Stock Market Ka Don.exe`. The NSIS installer, when built, is written under `desktop/tauri/src-tauri/target/release/bundle/nsis/`. First-run Python and backend setup requires internet and several hundred MB of free disk space. See [the launcher setup notes](desktop/tauri/README.md) for more details.
 
 ### Native Android + Frontend Workflow
 Use the bundled scripts for a mobile-ready local setup:
