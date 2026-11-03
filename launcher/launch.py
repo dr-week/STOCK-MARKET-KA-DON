@@ -79,6 +79,32 @@ def startup_error(message: str) -> int:
     return 1
 
 
+def open_dashboard(url: str) -> None:
+    candidates = []
+    for root in (os.environ.get("PROGRAMFILES(X86)"), os.environ.get("PROGRAMFILES")):
+        if root:
+            candidates.append(Path(root) / "Microsoft" / "Edge" / "Application" / "msedge.exe")
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        candidates.append(Path(local_app_data) / "Microsoft" / "Edge" / "Application" / "msedge.exe")
+    edge = next((candidate for candidate in candidates if candidate.is_file()), None)
+    if edge is None:
+        edge_path = shutil.which("msedge.exe")
+        edge = Path(edge_path) if edge_path else None
+
+    if edge is not None:
+        subprocess.Popen(
+            [str(edge), f"--app={url}", "--no-first-run"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=CREATE_NO_WINDOW,
+            close_fds=True,
+        )
+    else:
+        webbrowser.open(url, new=1)
+
+
 def main() -> int:
     RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -122,7 +148,7 @@ def main() -> int:
         if not wait_until_ready(FRONTEND_URL, frontend_process, b"<title>SMKD"):
             return startup_error("The dashboard did not become ready. Check frontend.log.")
 
-    webbrowser.open(FRONTEND_URL, new=2)
+    open_dashboard(FRONTEND_URL)
     return 0
 
 

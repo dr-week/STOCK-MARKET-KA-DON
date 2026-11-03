@@ -166,7 +166,9 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 - **Git**
 
 ### Automated Launch (Windows)
-Double-click the launcher. It prefers the backend virtual environment, starts the backend and frontend without persistent terminal windows, waits for both services to respond, then opens the dashboard in your browser. It uses pnpm when available and can start the locally installed Vite CLI directly when pnpm is not on `PATH`. Startup logs are written to `.runtime/launcher/` if troubleshooting is needed.
+Double-click the launcher. It prefers the backend virtual environment, starts the backend and frontend without persistent terminal windows, waits for both services to respond, then opens the dashboard in a dedicated Microsoft Edge app window (or your default browser if Edge is unavailable). It uses pnpm when available and can start the locally installed Vite CLI directly when pnpm is not on `PATH`. Startup logs are written to `.runtime/launcher/` if troubleshooting is needed.
+
+The launcher is intentionally a small BAT/VBS/Python set rather than a large bundled EXE. It uses the Python environment and frontend dependencies already present in this checkout; it is not a self-contained package for a fresh Windows PC. A portable build for another PC would need to download or include those runtimes and dependencies.
 
 ```powershell
 .\launcher\start.bat
