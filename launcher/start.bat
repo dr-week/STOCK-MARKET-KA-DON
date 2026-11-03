@@ -1,4 +1,3 @@
 @echo off
-cd /d "%~dp0"
-python launch.py
-pause
+wscript.exe //nologo "%~dp0start-hidden.vbs"
+exit /b

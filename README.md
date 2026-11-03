@@ -133,10 +133,11 @@ flowchart TD
 ```text
 ├── fast-framework/             # Danger Labs Submodule: Zuari Reactive Framework
 │   └── packages/stock-bot-ui/  # High-speed reactive frontend client
-├── launcher/                   # Process supervisor and daemon runtime manager
+├── launcher/                   # Quiet Windows launcher and local service startup
 │   ├── instance_manager.py     # Port allocation, pid tracking & graceful shutdowns
-│   ├── launch.py               # Synchronized dual-stack process orchestration
-│   └── start.bat               # Single-click Windows deployment script
+│   ├── launch.py               # Hidden service startup and readiness checks
+│   ├── start-hidden.vbs        # Runs the launcher without a console window
+│   └── start.bat               # Starts hidden services and opens the dashboard
 └── stock-signal-bot/           # Quantitative signal engine core
     ├── backend/app/            # FastAPI analysis and research server
     │   ├── api/                # Scan, paper, feedback, history and system routes
@@ -165,7 +166,8 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 - **Git**
 
 ### Automated Launch (Windows)
-Run the root supervisor script:
+Double-click the launcher. It starts the backend and frontend without persistent terminal windows, waits for the dashboard to respond, then opens it in your browser. Startup logs are written to `.runtime/launcher/` if troubleshooting is needed.
+
 ```powershell
 .\launcher\start.bat
 ```
