@@ -71,6 +71,7 @@ Message, branch, and remote defaults can also be set with `SMKD_PUBLISH_MESSAGE`
 - The helper refuses pre-staged changes to avoid accidentally mixing a staged snapshot with newer working-copy contents.
 - Real commits are assembled in a temporary Git worktree. The current checkout and index are left alone.
 - `Preview` does not commit or push. `Commit` creates a commit in an isolated worktree and saves a durable reference under `refs/codex/publish/<commit>`; it does not move the active local branch. `Push` publishes the commit to the selected remote/branch.
+- Before creating a worktree, the publisher fetches the destination branch and uses the newest compatible base. After a successful push, the current checkout stays untouched; a repeat publish of the same content is reported as a no-op.
 - Git hooks run by default. `-NoVerify` is available only as an explicit override.
 - `fast-framework` is a separate submodule and must be published from its own checkout.
 
