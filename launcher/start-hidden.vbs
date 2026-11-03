@@ -8,8 +8,9 @@ launcherDir = fso.GetParentFolderName(WScript.ScriptFullName)
 rootDir = fso.GetParentFolderName(launcherDir)
 scriptPath = fso.BuildPath(launcherDir, "launch.py")
 shell.CurrentDirectory = rootDir
-pythonwPath = fso.BuildPath(rootDir, "stock-signal-bot\backend\.venv\Scripts\pythonw.exe")
-If Not fso.FileExists(pythonwPath) Then
+If WScript.Arguments.Count > 0 Then
+    pythonwPath = WScript.Arguments(0)
+Else
     pythonwPath = "pythonw.exe"
 End If
 command = """" & pythonwPath & """ """ & scriptPath & """"
