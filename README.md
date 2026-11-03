@@ -145,7 +145,7 @@ pnpm repo:docs                                        # preview docs preset
 pnpm repo:publish -- -ChangeSet Changed               # tracked + untracked changes
 pnpm repo:commit -- -Include docs -Message "docs: update guide"
 pnpm repo:push -- -Branch main -Remote origin -Include README.md,docs -Message "docs: refresh guides"
-pnpm repo:publish -- -Action Push -Preset backend -Message "docs: update backend guide"
+pnpm repo:publish -- -Action Push -Preset docs -Message "docs: publish guide updates"
 pnpm repo:publish -- -Action Push -Preset docs -Message "docs: publish guide updates"
 ```
 
