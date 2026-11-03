@@ -58,6 +58,11 @@ stock-signal-bot/backend/app/data/research/
 
 # Runtime diagnostics (generated logs, crash bundles)
 .runtime/
+*.log
+*.err.log
+stock-signal-bot/backend/app/data/*.db
+stock-signal-bot/backend/app/data/*.db-shm
+stock-signal-bot/backend/app/data/*.db-wal
 
 # Tauri build output and staged backend resources
 desktop/tauri/node_modules/

@@ -135,6 +135,16 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 
 ## Quick start
 
+### Publish code changes
+
+On Windows, preview eligible source and documentation changes with `pnpm publish`. When the file list looks right, publish them with a short commit message:
+
+```powershell
+pnpm publish:now -- "docs: update setup guide"
+```
+
+The helper commits and pushes to the current branch. It excludes databases, logs, credentials, generated build folders, and the `fast-framework` submodule. Review the preview each time; changes inside the submodule must be published from its own repository.
+
 ### Windows desktop app
 The Tauri desktop window runs the dashboard and starts its local backend quietly. The app does not require Python, Node.js, pnpm, or a project checkout on the target PC. On first launch it checks WebView2 and installs it silently if missing, then downloads a pinned `uv` tool, private Python runtime, and locked backend packages into the current user's local app data. Internet access is needed for first setup; later launches reuse the environment. The tested portable folder is about 9 MB, while the runtime and dependencies use about 360 MB after the temporary download cache is removed. Setup and backend logs are under `%LOCALAPPDATA%\com.dangerlabs.smkd\logs`.
 

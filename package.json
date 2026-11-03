@@ -11,7 +11,9 @@
     "audit:modules": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev/audit-large-modules.ps1",
     "doctor:integration": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev/check-smkd-integration.ps1",
     "docs:check": "python scripts/dev/docs_tools/check.py",
-    "docs:find": "python scripts/dev/docs_tools/find.py"
+    "docs:find": "python scripts/dev/docs_tools/find.py",
+    "publish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1",
+    "publish:now": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Publish"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.3",
