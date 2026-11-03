@@ -3,10 +3,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
+from app.storage_paths import DATA_DIR
 
-_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-_DATA_DIR.mkdir(exist_ok=True)
-DB_PATH = str(_DATA_DIR / "paper_trades.db")
+DB_PATH = str(DATA_DIR / "paper_trades.db")
 
 
 def now_iso() -> str:

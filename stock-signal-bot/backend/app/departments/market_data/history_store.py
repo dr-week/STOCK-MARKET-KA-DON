@@ -6,9 +6,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
+from app.storage_paths import DATA_DIR
 
-_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
-_DB_PATH = str(_DATA_DIR / "market_history.db")
+_DB_PATH = str(DATA_DIR / "market_history.db")
 _SUPPORTED_INTERVALS = {"1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1mo"}
 
 

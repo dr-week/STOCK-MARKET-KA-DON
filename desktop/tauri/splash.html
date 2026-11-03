@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/jpeg" href="SMKD_LOGO.jpg" />
+  <title>Starting Stock Market Ka Don</title>
+  <style>
+    :root { color-scheme: dark; font: 16px/1.5 "Segoe UI", sans-serif; background: #0a1421; color: #edf2f7; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; }
+    main { width: min(440px, calc(100vw - 48px)); text-align: center; }
+    .mark { width: 150px; height: 150px; margin: 0 auto 24px; border-radius: 34px; display: block; box-shadow: 0 0 60px #20e6a044; }
+    .mark img { width: 100%; height: 100%; display: block; border-radius: inherit; }
+    h1 { margin: 0 0 10px; font-size: 23px; }
+    p { margin: 0; color: #a7b3c2; }
+    .track { height: 4px; margin: 28px 0 14px; overflow: hidden; border-radius: 4px; background: #29313d; }
+    .bar { width: 35%; height: 100%; border-radius: inherit; background: #19a974; animation: travel 1.4s ease-in-out infinite alternate; }
+    small { color: #788596; }
+    @keyframes travel { from { transform: translateX(0); } to { transform: translateX(185%); } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark"><img src="SMKD_LOGO.jpg" alt="Stock Market Ka Don bull logo" /></div>
+    <h1>Starting Stock Market Ka Don</h1>
+    <p>Preparing the local market-analysis engine.</p>
+    <div class="track"><div class="bar"></div></div>
+    <small>First run downloads Python and backend dependencies into your user profile. No system-wide Python or Node install is required.</small>
+  </main>
+</body>
+</html>

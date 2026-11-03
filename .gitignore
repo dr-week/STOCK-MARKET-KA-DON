@@ -58,3 +58,9 @@ stock-signal-bot/backend/app/data/research/
 
 # Runtime diagnostics (generated logs, crash bundles)
 .runtime/
+
+# Tauri build output and staged backend resources
+desktop/tauri/node_modules/
+desktop/tauri/src-tauri/target/
+desktop/tauri/bundle/
+desktop/tauri/portable/

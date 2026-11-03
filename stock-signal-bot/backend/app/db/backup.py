@@ -15,9 +15,10 @@ import gzip
 import json
 from datetime import datetime
 from typing import Dict, Any, List
+from app.storage_paths import BACKUP_DIR, DATA_DIR
 
-BACKUP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backups")
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "signals_tree.db")
+BACKUP_DIR = str(BACKUP_DIR)
+DB_PATH = str(DATA_DIR / "signals_tree.db")
 
 class BackupManager:
     def __init__(self, backup_dir: str = BACKUP_DIR, db_path: str = DB_PATH):

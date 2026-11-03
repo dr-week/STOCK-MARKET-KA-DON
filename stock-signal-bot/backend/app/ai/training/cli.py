@@ -10,11 +10,12 @@ import joblib
 from app.ai.training.data import load_candles
 from app.ai.training.features import build_samples
 from app.ai.training.trainer import train_time_split
+from app.storage_paths import DATA_DIR
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Train an experimental, offline stock model.")
-    parser.add_argument("--db", default=str(Path(__file__).resolve().parents[2] / "data" / "market_history.db"))
+    parser.add_argument("--db", default=str(DATA_DIR / "market_history.db"))
     parser.add_argument("--interval", default="5m")
     parser.add_argument("--provider", required=True, help="Train one source at a time; e.g. groww_trade_api.")
     parser.add_argument("--horizon-bars", type=int, default=15)

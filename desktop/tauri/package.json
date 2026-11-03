@@ -1,0 +1,14 @@
+{
+  "name": "smkd-windows-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Windows desktop shell for the SMKD dashboard",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "portable": "python scripts/stage_backend.py && cargo build --manifest-path src-tauri/Cargo.toml --release && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package_portable.ps1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4"
+  }
+}

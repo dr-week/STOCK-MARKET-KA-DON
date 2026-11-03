@@ -3,8 +3,9 @@ import os
 import json
 import time
 from typing import List, Dict, Any, Optional
+from app.storage_paths import DATA_DIR
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "signals_tree.db")
+DB_PATH = str(DATA_DIR / "signals_tree.db")
 
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)

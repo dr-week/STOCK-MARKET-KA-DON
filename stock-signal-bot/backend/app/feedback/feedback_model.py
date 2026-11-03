@@ -17,12 +17,13 @@ from sklearn.metrics import balanced_accuracy_score
 
 from app.feedback import feedback_repository
 from app.feedback.feedback_features import FEATURE_NAMES
+from app.storage_paths import RESEARCH_DIR
 
 MIN_OUTCOMES = 100
 MIN_DIRECTIONAL_CLASS = 20
 MIN_SESSIONS = 30
 _IST = ZoneInfo("Asia/Kolkata")
-_ARTIFACT_DIR = Path(__file__).resolve().parents[1] / "data" / "research"
+_ARTIFACT_DIR = RESEARCH_DIR
 
 
 def _session_date(timestamp: str) -> str:

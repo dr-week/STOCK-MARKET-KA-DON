@@ -133,11 +133,9 @@ flowchart TD
 ```text
 ├── fast-framework/             # Danger Labs Submodule: Zuari Reactive Framework
 │   └── packages/stock-bot-ui/  # High-speed reactive frontend client
-├── launcher/                   # Quiet Windows launcher and local service startup
-│   ├── instance_manager.py     # Port allocation, pid tracking & graceful shutdowns
-│   ├── launch.py               # Hidden service startup and readiness checks
-│   ├── start-hidden.vbs        # Runs the launcher without a console window
-│   └── start.bat               # Starts hidden services and opens the dashboard
+├── desktop/tauri/               # Native Windows desktop app and installer source
+│   ├── scripts/                 # Backend staging and first-run setup
+│   └── src-tauri/               # Small Rust + system WebView2 desktop shell
 └── stock-signal-bot/           # Quantitative signal engine core
     ├── backend/app/            # FastAPI analysis and research server
     │   ├── api/                # Scan, paper, feedback, history and system routes
@@ -160,19 +158,24 @@ Daily data and other dashboard indicators may be displayed but do not necessaril
 
 ## ⚡ Quick Start & Installation
 
-### Prerequisites
-- **Python**: 3.11+ (with pip)
-- **Node.js**: 18+ & **pnpm**: 9+
-- **Git**
+### Windows desktop app
+The Tauri desktop window runs the dashboard and starts its local backend quietly. The app does not require Python, Node.js, pnpm, or a project checkout on the target PC. On first launch it checks WebView2 and installs it silently if missing, then downloads a pinned `uv` tool, private Python runtime, and locked backend packages into the current user's local app data. Internet access is needed for first setup; later launches reuse the environment. The tested portable folder is about 9 MB, while the runtime and dependencies use about 360 MB after the temporary download cache is removed. Setup and backend logs are under `%LOCALAPPDATA%\com.dangerlabs.smkd\logs`.
 
-### Automated Launch (Windows)
-Double-click the launcher. It prefers the backend virtual environment, starts the backend and frontend without persistent terminal windows, waits for both services to respond, then opens the dashboard in a dedicated Microsoft Edge app window (or your default browser if Edge is unavailable). It uses pnpm when available and can start the locally installed Vite CLI directly when pnpm is not on `PATH`. Startup logs are written to `.runtime/launcher/` if troubleshooting is needed.
+The installer uses the Windows WebView2 runtime instead of bundling Chromium. The NSIS installer can download the small WebView2 bootstrapper if the runtime is missing. See [Tauri's Windows installer options](https://v2.tauri.app/distribute/windows-installer/) for runtime behavior.
 
-The launcher is intentionally a small BAT/VBS/Python set rather than a large bundled EXE. It uses the Python environment and frontend dependencies already present in this checkout; it is not a self-contained package for a fresh Windows PC. A portable build for another PC would need to download or include those runtimes and dependencies.
+While the backend is open, its quiet worker scans on weekdays during NSE hours and records qualifying trades to a local SQLite paper ledger; it never places broker orders. A separate background trainer can save research candidates after enough labeled outcomes, but it does not change live signals. There is no Hermes coding agent installed in SMKD. See [paper-trade behavior and safeguards](docs/PAPER_TRADE_WORKFLOW.md) and [AI training boundaries](docs/AI_TRAINING_PIPELINE.md).
+
+For developers building the app, install Node.js 18+ and Rust with the MSVC C++ build tools, then run:
 
 ```powershell
-.\launcher\start.bat
+cd desktop/tauri
+npm install
+npm run dev       # local development
+npm run portable  # build an unpacked, directly runnable Windows folder
+npm run build     # Windows NSIS installer
 ```
+
+The portable app folder is `desktop/tauri/portable/`; run `Stock Market Ka Don.exe` from that folder. It is not installed in Windows Programs. The NSIS installer, when built, is written under `desktop/tauri/src-tauri/target/release/bundle/nsis/`. Both run without developer tools on the target PC. First-run Python and backend setup requires internet and several hundred MB of free disk space.
 
 ### Native Android + Frontend Workflow
 Use the bundled scripts for a mobile-ready local setup:

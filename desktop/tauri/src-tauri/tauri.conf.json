@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Stock Market Ka Don",
+  "version": "0.1.0",
+  "identifier": "com.dangerlabs.smkd",
+  "build": {
+    "beforeDevCommand": "python scripts/stage_backend.py",
+    "beforeBuildCommand": "python scripts/stage_backend.py",
+    "frontendDist": [
+      "../../../fast-framework/packages/stock-bot-ui/dist",
+      "../splash.html"
+    ]
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Stock Market Ka Don",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 980,
+        "minHeight": 680,
+        "center": true,
+        "url": "splash.html"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico"],
+    "category": "Finance",
+    "shortDescription": "Local stock analysis and paper trading dashboard",
+    "resources": {
+      "../bundle/backend": "backend",
+      "../scripts/prepare_backend.ps1": "bootstrap/prepare_backend.ps1",
+      "../scripts/ensure_webview.ps1": "bootstrap/ensure_webview.ps1"
+    },
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": ["English"]
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
+    }
+  }
+}

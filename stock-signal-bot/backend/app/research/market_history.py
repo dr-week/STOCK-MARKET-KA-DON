@@ -4,8 +4,9 @@ import math
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+from app.storage_paths import DATA_DIR
 
-DEFAULT_DB = Path(__file__).resolve().parents[1] / "data" / "market_history.db"
+DEFAULT_DB = DATA_DIR / "market_history.db"
 
 
 def load_close_series(
