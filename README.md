@@ -7,13 +7,14 @@
 
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-3acb82?style=flat-square" alt="MIT License" /></a>
+    <a href="https://github.com/dr-week/STOCK-MARKET-KA-DON/actions/workflows/ci.yml"><img src="https://github.com/dr-week/STOCK-MARKET-KA-DON/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline" /></a>
     <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11+" /></a>
     <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/UI-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
     <a href="https://github.com/dr-week/STOCK-MARKET-KA-DON/graphs/contributors"><img src="https://img.shields.io/github/contributors/dr-week/STOCK-MARKET-KA-DON?style=flat-square" alt="Contributors" /></a>
   </p>
 
-  <p><a href="#features">Features</a> · <a href="#quick-start">Quick start</a> · <a href="#windows-desktop-app">Windows app</a> · <a href="#api-reference">API</a> · <a href="#limitations">Limitations</a></p>
+  <p><a href="#features">Features</a> · <a href="#quick-start">Quick start</a> · <a href="#deployment--github-pages">Deployment</a> · <a href="#code-quality-linting-and-ci">Linting &amp; CI</a> · <a href="#api-reference">API</a> · <a href="#roadmap--status">Roadmap</a> · <a href="#limitations">Limitations</a></p>
 </div>
 
 ---
@@ -223,6 +224,75 @@ For the full route list, use `/docs` while the backend is running; routes can ch
 
 ---
 
+## Deployment & GitHub Pages
+
+- **Project Portal (GitHub Pages):** Published automatically from [docs/index.html](docs/index.html) and `docs/` via [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) (ensure **Settings → Pages → Source** is set to **GitHub Actions**). Includes documentation links and a live browser `/health` connectivity checker for your backend URL.
+- **Container Image (GHCR):** Built and published on every push to `main` via [.github/workflows/deploy-backend.yml](.github/workflows/deploy-backend.yml) using [stock-signal-bot/Dockerfile](stock-signal-bot/Dockerfile) (`ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest`).
+- **Local Docker:**
+  ```bash
+  docker compose up --build
+  ```
+- **Free-Tier Backend & Database Hosting:** Ready for one-click Render deployment via [render.yaml](render.yaml), or Koyeb / Hugging Face Spaces via the GHCR container image. Set `SMKD_ALLOWED_ORIGINS` to your GitHub Pages origin. Full comparison of free-tier limits, cold-start behavior, and Turso/Neon database options: [docs/GITHUB_DEPLOYMENT_FREE_TIER.md](docs/GITHUB_DEPLOYMENT_FREE_TIER.md).
+
+---
+
+## Code quality, linting and CI
+
+### Standards
+- **Python 3.11+** with locked dependencies in [stock-signal-bot/backend/requirements-lock.txt](stock-signal-bot/backend/requirements-lock.txt).
+- **100–150 LOC modular architecture:** Every non-test Python source file under `stock-signal-bot/backend/app` and `scripts/dev` is kept at **≤150 lines**, split by responsibility, and enforced in CI.
+- **Static analysis:** `ruff` configured in [ruff.toml](ruff.toml) (`F` pyflakes + `E9` syntax/runtime checks; `F401` ignored only for backward-compatible re-exports).
+- **Market-data integrity:** Never fabricate prices, candles, indicators, or synthetic fallback rows in production paths (verified by the AI Agent Harness).
+
+### Local commands
+
+```bash
+# Lint (ruff)
+npm run lint
+# or directly:
+uvx ruff@0.8.6 check stock-signal-bot/backend/app scripts/dev
+
+# Enforce 150-line module limit
+find stock-signal-bot/backend/app scripts/dev -name '*.py' -not -path '*/tests/*' \
+  -exec wc -l {} + | awk '$2!="total" && $1>150 {print "OVER LIMIT: "$0; bad=1} END{exit bad+0}'
+
+# Deterministic backend tests
+npm run test:backend
+# or directly:
+cd stock-signal-bot/backend && python3 -m unittest discover -s app/tests -t .
+
+# AI Agent Harness (preflight doctor, duplicate detection, market-data integrity, 6-eval suite)
+npm run harness:doctor
+npm run harness:eval
+npm run harness:duplicate
+npm run harness:integrity
+python3 -m unittest discover -s scripts/dev/tests
+```
+
+### GitHub Actions workflows
+
+| Workflow | Trigger | What it verifies / publishes |
+|:---|:---|:---|
+| [ci.yml](.github/workflows/ci.yml) | Push & PR to `main` | `ruff` lint, ≤150-LOC module gate, AI Agent Harness eval + 22 dev tests, docs sync checks, deterministic backend tests |
+| [deploy-backend.yml](.github/workflows/deploy-backend.yml) | Push to `main` / manual | Multi-stage non-root Docker build & publish to GHCR |
+| [deploy-pages.yml](.github/workflows/deploy-pages.yml) | Push to `main` / manual | Builds and deploys [docs/index.html](docs/index.html) and `docs/` to GitHub Pages |
+
+### Troubleshooting
+- **`ModuleNotFoundError: No module named 'app'`:** Run backend tests from `stock-signal-bot/backend` with `-t .` (or set `PYTHONPATH=stock-signal-bot/backend`).
+- **Python 3.11 + NumPy install error:** Keep [requirements-lock.txt](stock-signal-bot/backend/requirements-lock.txt) pinned to `numpy==2.4.6` (`numpy>=2.5` dropped Python 3.11).
+- **CORS blocked from GitHub Pages portal:** Set `SMKD_ALLOWED_ORIGINS` on your backend host (e.g., `https://<user>.github.io`).
+- **Harness `No module named 'yaml'`:** Install `pyyaml` (`pip install pyyaml==6.0.2`).
+
+---
+
+## Roadmap & status
+
+- **Completed:** Modular ≤150-LOC backend & tooling refactor, cross-platform AI Agent Harness (`scripts/dev/harness/`), `ruff` static analysis + CI quality gates, GHCR container packaging, Render blueprint (`render.yaml`), GitHub Pages portal (`docs/index.html`), and Quantum SDK feasibility review (kept strictly offline; infeasible for live intraday paths).
+- **Next priorities:** Live free-tier backend deployment (Render/Koyeb) with CORS linked to GitHub Pages, optional Turso/Neon persistence for stateless free-tier hosts, and restoring frontend UI CI once `fast-framework` package paths are aligned.
+- See [docs/PRODUCT_TECHNICAL_ROADMAP.md](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [docs/CLOUD_NATIVE_ARCHITECTURE.md](docs/CLOUD_NATIVE_ARCHITECTURE.md) for full phase details.
+
+---
+
 ## Limitations
 
 Active issues, architectural constraints, and enhancement roadmaps are tracked transparently in the **[GitHub Issues tab](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)**:
@@ -243,25 +313,3 @@ Active issues, architectural constraints, and enhancement roadmaps are tracked t
 <div align="center">
   <sub>Copyright © 2026 <b>Danger Labs</b>. All rights reserved.</sub>
 </div>
-
-
-## Code quality, linting and CI
-
-Standards: Python 3.11, files kept to ≤150 lines per module (split by responsibility), no synthetic market data in production paths.
-
-```bash
-# Lint (ruff, config in ruff.toml)
-uvx ruff@0.8.6 check stock-signal-bot/backend/app scripts/dev
-
-# Backend tests
-cd stock-signal-bot/backend && python -m unittest discover -s app/tests -t .
-
-# Agent harness (doctor, duplicate/integrity checks, evaluation suite)
-python3 scripts/dev/run_harness.py doctor
-python3 scripts/dev/run_harness.py eval
-python3 -m unittest discover -s scripts/dev/tests
-```
-
-GitHub Actions ([ci.yml](.github/workflows/ci.yml)) runs lint, the 150-line module report, harness evaluation, docs checks and backend tests on every push and pull request. [deploy-backend.yml](.github/workflows/deploy-backend.yml) publishes the container to GHCR and [deploy-pages.yml](.github/workflows/deploy-pages.yml) publishes the docs/status site to GitHub Pages (set Settings → Pages → Source to "GitHub Actions"). Free-tier hosting options and limits: [docs/GITHUB_DEPLOYMENT_FREE_TIER.md](docs/GITHUB_DEPLOYMENT_FREE_TIER.md).
-
-Troubleshooting: if backend tests fail with `No module named 'app'`, run them from `stock-signal-bot/backend` with `-t .`; if `numpy` fails to install on Python 3.11, keep `requirements-lock.txt` pinned to `numpy==2.4.6`.
