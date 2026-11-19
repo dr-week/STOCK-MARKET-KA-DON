@@ -1,4 +1,3 @@
-import time
 from typing import Dict
 from app.market.fetcher import fetch_nse_chart
 
@@ -9,13 +8,6 @@ _SECTOR_TICKERS: Dict[str, str] = {
     "^CNXPHARMA": "Pharma",
     "^CNXFMCG": "FMCG",
     "^CNXMETAL": "Metals",
-}
-
-_FALLBACK_SECTOR_STRENGTHS: Dict[str, str] = {
-    "Banking": "STRONG (+0.8%)",
-    "IT": "CONSOLIDATION (-0.1%)",
-    "Auto": "BULLISH (+1.2%)",
-    "Energy": "NEUTRAL (+0.2%)",
 }
 
 
@@ -48,7 +40,4 @@ def fetch_live_sector_strengths() -> Dict[str, str]:
             strengths[sector_name] = format_sector_label(round(change_pct, 1))
         except Exception:
             pass
-
-    if not strengths:
-        return dict(_FALLBACK_SECTOR_STRENGTHS)
     return strengths

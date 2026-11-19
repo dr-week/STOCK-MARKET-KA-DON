@@ -46,10 +46,11 @@ def list_system_backups():
 @router.get("/system/feed-health/{symbol}")
 def check_feed_health(symbol: str):
     """Check health and freshness of the market feed for a given symbol."""
-    is_healthy, status_code = collector_service.check_feed_health(symbol.upper())
+    sym = symbol.upper()
+    is_healthy, status_code = collector_service.check_feed_health(sym)
     return {
-        "symbol": symbol.upper(),
+        "symbol": sym,
         "is_healthy": is_healthy,
         "status": status_code,
-        "active_provider": collector_service.active_provider,
+        "active_provider": collector_service.symbol_providers.get(sym, collector_service.active_provider),
     }

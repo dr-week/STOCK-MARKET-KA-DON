@@ -1,13 +1,24 @@
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from app.market.sessions import get_market_session_state
 from app.market.fetcher import fetch_nse_chart
 from app.departments.market_intelligence.sector_strengths import (
     _SECTOR_TICKERS,
-    _FALLBACK_SECTOR_STRENGTHS,
     format_sector_label as _format_sector_label,
     fetch_live_sector_strengths,
 )
+
+
+def _classify_vix_regime(level: Optional[float]) -> str:
+    if level is None:
+        return "UNAVAILABLE"
+    if level < 12.0:
+        return "LOW_VOLATILITY (<12)"
+    if level <= 18.0:
+        return "OPTIMAL_TRENDING (12-18 Ideal)"
+    if level <= 24.0:
+        return "ELEVATED_VOLATILITY (18-24)"
+    return "HIGH_RISK (>24)"
 
 
 class MarketIntelligenceDepartment:
@@ -29,25 +40,38 @@ class MarketIntelligenceDepartment:
             return self._sector_cache
 
         strengths = fetch_live_sector_strengths()
-        self._sector_cache = strengths
-        self._sector_cache_ts = now
+        if strengths:
+            self._sector_cache = strengths
+            self._sector_cache_ts = now
         return strengths
 
     def get_intelligence(self) -> Dict[str, Any]:
         session_info = get_market_session_state()
 
-        # Fetch live Nifty 50 benchmark index (Ticker ^NSEI on Yahoo Finance)
         nifty_chart = fetch_nse_chart("^NSEI", interval="5m", range_param="1d")
-        nifty_price = 24850.0
-        nifty_change = 0.25
-
+        nifty_price: Optional[float] = None
+        nifty_change: Optional[float] = None
         if nifty_chart:
             meta = nifty_chart.get("meta", {})
-            nifty_price = meta.get("regularMarketPrice", 24850.0)
-            prev = meta.get("previousClose", nifty_price)
-            nifty_change = round(((nifty_price - prev) / prev) * 100, 2) if prev else 0.0
+            nifty_price = meta.get("regularMarketPrice")
+            prev = meta.get("previousClose")
+            if nifty_price is not None and prev:
+                nifty_change = round(((nifty_price - prev) / prev) * 100, 2)
 
-        nifty_trend = "BULLISH" if nifty_change > 0.05 else ("BEARISH" if nifty_change < -0.05 else "SIDEWAYS")
+        if nifty_change is None:
+            nifty_trend = "UNAVAILABLE"
+            macro_bias = "NEUTRAL"
+        else:
+            nifty_trend = "BULLISH" if nifty_change > 0.05 else ("BEARISH" if nifty_change < -0.05 else "SIDEWAYS")
+            macro_bias = "FAVOR_LONGS" if nifty_change >= 0 else "FAVOR_SHORTS"
+
+        vix_chart = fetch_nse_chart("^INDIAVIX", interval="5m", range_param="1d")
+        vix_level: Optional[float] = None
+        if vix_chart:
+            raw_vix = vix_chart.get("meta", {}).get("regularMarketPrice")
+            if raw_vix is not None:
+                vix_level = round(float(raw_vix), 2)
+
         sector_strengths = self._fetch_sector_strengths()
 
         return {
@@ -55,14 +79,16 @@ class MarketIntelligenceDepartment:
             "nifty_50": {
                 "price": nifty_price,
                 "change_pct": nifty_change,
-                "trend": nifty_trend
+                "trend": nifty_trend,
+                "status": "available" if nifty_price is not None else "unavailable",
             },
             "india_vix": {
-                "level": 13.8,
-                "regime": "OPTIMAL_TRENDING (12-18 Ideal)"
+                "level": vix_level,
+                "regime": _classify_vix_regime(vix_level),
+                "status": "available" if vix_level is not None else "unavailable",
             },
             "sector_strengths": sector_strengths,
-            "macro_bias": "FAVOR_LONGS" if nifty_change >= 0 else "FAVOR_SHORTS"
+            "macro_bias": macro_bias,
         }
 
 

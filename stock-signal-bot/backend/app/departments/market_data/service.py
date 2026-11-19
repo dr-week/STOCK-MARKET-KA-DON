@@ -140,6 +140,10 @@ class MarketDataDepartment:
 
         self._cache[cache_key] = payload
         self._cache_expiry[cache_key] = now
+        if not replay:
+            from app.departments.market_data.collector import collector_service
+            collector_service.last_successful_ingestion[symbol] = now
+            collector_service.symbol_providers[symbol] = payload["data_quality"]["provider"]
         return payload
 
 market_data_dep = MarketDataDepartment()

@@ -46,6 +46,7 @@ default_origins = [
     "http://127.0.0.1:4173",
     "http://localhost:4173",
     "http://tauri.localhost",
+    "https://dr-week.github.io",
 ]
 
 env_origins = os.getenv("SMKD_ALLOWED_ORIGINS", "")

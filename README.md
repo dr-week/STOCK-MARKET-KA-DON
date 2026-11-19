@@ -117,7 +117,7 @@ flowchart TD
 
 ## Signal model
 
-The active scan uses a deterministic score with seven rule groups and 10 possible points: market structure (2), supply/demand or key-candle confirmation (2), price vs VWAP (2), EMA 9/21 alignment (1), relative volume (1), momentum (1), and Nifty 50 direction (1). BUY/SELL candidates require at least 7 points plus a risk/reward check. See the [full model description and limitations](stock-signal-bot/README.md#the-active-intraday-scoring-model).
+The active scan uses a deterministic score with rule groups totaling 11 possible points: market structure (2), supply/demand or key-candle confirmation (2), price vs VWAP (2), EMA 9/21 alignment (1), relative volume (1), momentum (1), Nifty 50 direction (1), and multi-timeframe alignment (1). BUY/SELL candidates require at least 7 points plus a risk/reward check. See the [full model description and limitations](stock-signal-bot/README.md#the-active-intraday-scoring-model).
 
 Daily data and chart-only indicators may be displayed but do not necessarily contribute to the active intraday score. News sentiment is not included in the score. The hand-authored rules have not been calibrated to predict success and do not establish positive expectancy. Groww account access is read-only; the app does not place broker orders.
 

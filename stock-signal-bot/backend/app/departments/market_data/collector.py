@@ -25,6 +25,7 @@ class MarketDataCollector:
         self.active_provider = primary_provider
         self.stale_threshold_seconds = 30.0
         self.last_successful_ingestion: Dict[str, float] = {}
+        self.symbol_providers: Dict[str, str] = {}
         self.sequence_tracker: Dict[str, int] = {}
         self.candle_interval_seconds = 300  # 5 minutes
 
