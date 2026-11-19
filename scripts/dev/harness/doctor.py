@@ -4,12 +4,13 @@ Read-only preflight diagnostic checks across repository, toolchain, and dependen
 Cross-platform implementation replacing Windows-only PowerShell doctor.
 """
 
-import os
-import sys
 import json
-import shutil
+import os
 import subprocess
-from typing import Dict, Any, List
+import sys
+from typing import Any, Dict, List
+
+from scripts.dev.harness.doctor_checks import check_requirements, check_toolchain
 
 
 class EnvironmentDoctor:
@@ -38,9 +39,8 @@ class EnvironmentDoctor:
         self._check_git_status()
         self._check_submodules()
         self._check_json_manifests()
-        self._check_python_environment()
-        self._check_node_and_pnpm()
-        self._check_backend_requirements()
+        check_toolchain(self.log)
+        check_requirements(self.repo_root, self.log)
 
         return {
             "passed": not self.has_fail,
@@ -103,7 +103,6 @@ class EnvironmentDoctor:
             self.log("WARN", f"Submodule check error: {str(e)}")
 
     def _check_json_manifests(self):
-        # Validate all package.json files
         count = 0
         for root, dirs, files in os.walk(self.repo_root):
             dirs[:] = [d for d in dirs if d not in {".git", "node_modules", ".runtime", "dist", "build"}]
@@ -121,39 +120,6 @@ class EnvironmentDoctor:
 
         if count == 0:
             self.log("WARN", "No package.json files found to validate.")
-
-    def _check_python_environment(self):
-        ver = sys.version_info
-        if ver.major == 3 and ver.minor >= 11:
-            self.log("PASS", f"Python version is compatible: {ver.major}.{ver.minor}.{ver.micro}")
-        else:
-            self.log("WARN", f"Python version is {ver.major}.{ver.minor}.{ver.micro}; recommended is >= 3.11")
-
-        uv_path = shutil.which("uv")
-        if uv_path:
-            self.log("PASS", f"uv package manager available at: {uv_path}")
-        else:
-            self.log("WARN", "uv package manager not detected on PATH.")
-
-    def _check_node_and_pnpm(self):
-        node_path = shutil.which("node")
-        if node_path:
-            self.log("PASS", f"Node.js available at: {node_path}")
-        else:
-            self.log("WARN", "Node.js not detected on PATH.")
-
-        pnpm_path = shutil.which("pnpm")
-        if pnpm_path:
-            self.log("PASS", f"pnpm available at: {pnpm_path}")
-        else:
-            self.log("WARN", "pnpm not detected on PATH.")
-
-    def _check_backend_requirements(self):
-        req_file = os.path.join(self.repo_root, "stock-signal-bot", "backend", "requirements.txt")
-        if os.path.exists(req_file):
-            self.log("PASS", "Backend requirements.txt found.")
-        else:
-            self.log("WARN", f"Backend requirements file not found at {req_file}")
 
 
 def run_doctor(repo_root: str = None) -> int:

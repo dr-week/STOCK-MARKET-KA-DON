@@ -7,6 +7,7 @@ from app.indicators.structure import (
     analyze_market_structure, detect_supply_demand_zones, detect_key_candle
 )
 from app.indicators.price_action_patterns import detect_price_action_patterns
+from app.departments.technical_analysis.trend_direction import compute_trend_direction
 
 ADX_PERIOD = 14
 ADX_MINIMUM_BARS = 2 * ADX_PERIOD
@@ -21,44 +22,7 @@ class TechnicalAnalysisDepartment:
     """
 
     def _compute_trend_direction(self, closes: List[float]) -> str:
-        """
-        Determine trend direction for a given candle series using EMA alignment.
-
-        Rules:
-        - ``BULLISH``  if EMA-9 > EMA-21 **and** last close > EMA-9
-        - ``BEARISH``  if EMA-9 < EMA-21 **and** last close < EMA-9
-        - ``NEUTRAL``  otherwise (cross-over zone, insufficient bars, or flat)
-
-        Requires at least 22 bars (EMA-21 warm-up). Returns ``NEUTRAL`` for
-        shorter series rather than raising.
-
-        Parameters
-        ----------
-        closes : list of float
-            Chronologically ordered closing prices.
-
-        Returns
-        -------
-        str
-            One of: ``"BULLISH"``, ``"BEARISH"``, ``"NEUTRAL"``.
-        """
-        if len(closes) < 22:
-            return "NEUTRAL"
-
-        ema_9 = calculate_ema(closes, 9)
-        ema_21 = calculate_ema(closes, 21)
-
-        if ema_9 is None or ema_21 is None:
-            return "NEUTRAL"
-
-        last_close = closes[-1]
-
-        if ema_9 > ema_21 and last_close > ema_9:
-            return "BULLISH"
-        elif ema_9 < ema_21 and last_close < ema_9:
-            return "BEARISH"
-
-        return "NEUTRAL"
+        return compute_trend_direction(closes)
 
     def analyze(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
         c_5m = market_data.get("candles_5m", {})
@@ -116,14 +80,10 @@ class TechnicalAnalysisDepartment:
         sparkline = [round(c, 2) for c in closes[-20:]]
 
         # --- Multi-timeframe trend direction ---
-        # 15m trend: derived from the 15-minute candle closes
         closes_15m = market_data.get("candles_15m", {}).get("closes", [])
         m15_trend_available = len(closes_15m) >= 22
         m15_trend = self._compute_trend_direction(closes_15m)
 
-        # H1/Daily proxy trend: derived from daily closing EMA alignment.
-        # Using daily candles as a structural proxy for the higher timeframe
-        # bias avoids an extra H1 fetch while providing adequate signal.
         closes_daily = market_data.get("candles_daily", {}).get("closes", [])
         h1_trend = self._compute_trend_direction(closes_daily)
 

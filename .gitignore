@@ -48,6 +48,7 @@ Thumbs.db
 # Backup database snapshots
 stock-signal-bot/backend/app/backups/**/*.db.gz
 stock-signal-bot/backend/app/backups/**/*.json
+stock-signal-bot/backend/app/data/backups/
 stock-signal-bot/backend/app/data/paper_trades.db
 stock-signal-bot/backend/app/data/paper_trades.db-shm
 stock-signal-bot/backend/app/data/paper_trades.db-wal
