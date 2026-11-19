@@ -55,7 +55,7 @@ class AgentOrchestrator:
         if files:
             for f in files:
                 base_name = os.path.splitext(os.path.basename(f))[0]
-                dup_res = self.detector.check(base_name)
+                self.detector.check(base_name)
                 # Advisory duplicate notice
 
         # Stage 3: Context Packet

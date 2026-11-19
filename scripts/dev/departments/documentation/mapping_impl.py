@@ -28,10 +28,6 @@ DOC_MAP = {
         "docs/BACKTESTING_FEEDBACK_LOOP.md",
     ],
     "stock-signal-bot/backend/app/paper_trading": [
-        "docs/BACKTESTING_FEEDBACK_LOOP.md",
-        "docs/PAPER_TRADE_WORKFLOW.md",
-    ],
-    "stock-signal-bot/backend/app/paper_trading": [
         "docs/PAPER_TRADE_WORKFLOW.md",
         "docs/BACKTESTING_FEEDBACK_LOOP.md",
     ],

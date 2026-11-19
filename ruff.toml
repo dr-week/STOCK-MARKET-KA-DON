@@ -3,6 +3,6 @@ line-length = 120
 extend-exclude = ["fast-framework", "node_modules"]
 
 [lint]
-# Correctness-focused rules only: pyflakes + pycodestyle errors (E7/E9) + undefined names
+# Pyflakes correctness rules + syntax/runtime error rules
 select = ["F", "E9"]
-ignore = ["F401", "F841", "F541", "F601"]  # F401 re-exports kept for compat; others tracked as tech debt
+ignore = ["F401"]  # re-exports kept for backward-compatible imports/patch targets

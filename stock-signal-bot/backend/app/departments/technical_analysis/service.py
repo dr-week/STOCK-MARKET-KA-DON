@@ -32,8 +32,6 @@ class TechnicalAnalysisDepartment:
         closes = c_5m.get("closes", [])
         volumes = c_5m.get("volumes", [])
 
-        c_price = market_data["current_price"]
-
         minimum_bars = 21
         if len(closes) < minimum_bars:
             reason = f"Need at least {minimum_bars} complete 5-minute bars; received {len(closes)}."

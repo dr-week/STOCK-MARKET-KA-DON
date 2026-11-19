@@ -10,15 +10,13 @@ def get_market_session_state() -> Dict[str, Any]:
     minutes_from_midnight = now.hour * 60 + now.minute
     ist_str = now.strftime("%H:%M:%S")
 
-    # Time boundaries
-    pre_open = 9 * 60          # 09:00
+    # Time boundaries (09:00 pre-open, 15:30 market close)
     market_open = 9 * 60 + 15  # 09:15
     trap_end = 9 * 60 + 30     # 09:30
     prime_1_end = 11 * 60 + 15 # 11:15
     lull_end = 13 * 60 + 15    # 13:15
     prime_2_end = 14 * 60 + 45 # 14:45
     square_off = 15 * 60 + 15  # 15:15
-    market_close = 15 * 60 + 30# 15:30
 
     if now.weekday() >= 5:
         phase = "WEEKEND / CLOSED"

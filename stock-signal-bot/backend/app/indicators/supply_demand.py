@@ -17,7 +17,6 @@ def detect_supply_demand_zones(highs: List[float], lows: List[float], closes: Li
 
     for i in range(len(closes) - 3, 2, -1):
         move = closes[i] - closes[i - 1]
-        vol = volumes[i] if i < len(volumes) else 1000
 
         # Bullish impulsive departure -> Base prior is Demand Zone
         if move > 1.5 * avg_body and demand_zone is None:

@@ -78,7 +78,7 @@ def score_intraday_rules(
         bull_reasons.append(f"Fibonacci (+1): Confluence bounce in Golden 0.50-0.618 Pocket (₹{round(fib_500,2)}-₹{round(fib_618,2)})")
     elif fib_382 <= c_price <= fib_500 and c_price < vwap:
         bear_score += 1
-        bear_reasons.append(f"Fibonacci (+1): Resistance test at 0.382-0.50 Retracement")
+        bear_reasons.append("Fibonacci (+1): Resistance test at 0.382-0.50 Retracement")
 
     return bull_score, bear_score, bull_reasons, bear_reasons
 

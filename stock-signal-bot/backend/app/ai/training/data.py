@@ -16,7 +16,7 @@ def load_candles(db_path: str, interval: str, provider: str) -> list[dict[str, A
         if table is None:
             raise ValueError(f"No market_candles table in {db_path}.")
         rows = connection.execute(
-            f"""
+            """
             SELECT symbol, timestamp, open, high, low, close, volume, provider
             FROM market_candles
             WHERE interval=? AND provider=?

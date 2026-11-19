@@ -82,7 +82,7 @@ class AgentEvaluationHarness:
             task_id = f"EVAL-CB-{int(time.time()*1000)}"
             create_task(task_id, "Circuit Breaker Test", [], [])
             transition_task(task_id, "IN_PROGRESS", reason="Started test")
-            inc1 = record_incident(task_id, "pytest run", "JSON_PARSE_ERROR in mock", 1)
+            record_incident(task_id, "pytest run", "JSON_PARSE_ERROR in mock", 1)
             inc2 = record_incident(task_id, "pytest run", "JSON_PARSE_ERROR in mock", 1)
             if inc2["attempt_count"] < 2:
                 return False, f"Expected attempt_count >= 2, got {inc2['attempt_count']}"

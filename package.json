@@ -16,6 +16,8 @@
     "harness:doctor": "python3 scripts/dev/run_harness.py doctor",
     "harness:duplicate": "python3 scripts/dev/run_harness.py duplicate-check",
     "harness:integrity": "python3 scripts/dev/run_harness.py validate-integrity",
+    "lint": "uvx ruff@0.8.6 check stock-signal-bot/backend/app scripts/dev",
+    "test:backend": "cd stock-signal-bot/backend && python3 -m unittest discover -s app/tests -t .",
     "repo:publish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1",
     "repo:commit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Action Commit",
     "repo:push": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 -Action Push",
