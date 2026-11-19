@@ -1,0 +1,75 @@
+name: Deploy Static Dashboard & Docs to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy-pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare Static Site Artifact
+        run: |
+          mkdir -p _site
+          cp -r docs/* _site/ || true
+          cp README.md _site/index.md || true
+          # Create a lightweight status/landing page if index.html is missing
+          if [ ! -f _site/index.html ]; then
+            cat << 'EOF' > _site/index.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Stock Market Ka Don (SMKD) Dashboard</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+              .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2rem; max-width: 600px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+              h1 { color: #38bdf8; margin-top: 0; }
+              p { line-height: 1.6; color: #cbd5e1; }
+              .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; background: #0284c7; color: #fff; margin-bottom: 1rem; }
+              .btn { display: inline-block; background: #22c55e; color: #000; font-weight: bold; padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-top: 1rem; }
+              .btn:hover { background: #16a34a; }
+              code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <span class="badge">NSE Quantitative Research</span>
+              <h1>Stock Market Ka Don (SMKD)</h1>
+              <p>Welcome to the SMKD research portal. The local backend API service powers scanner operations, technical indicators, and deterministic risk checks for NSE equities.</p>
+              <p>For API health status or local connections, point your client to your deployed backend or local instance at <code>http://localhost:8000/api</code>.</p>
+              <a href="https://github.com/dr-week/STOCK-MARKET-KA-DON" class="btn">View on GitHub</a>
+            </div>
+          </body>
+          </html>
+          EOF
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,5 +1,7 @@
 """Workflow stage implementations. No policy gates belong here."""
 
+import shutil
+import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 from scripts.dev.departments.execution import execute_command
@@ -11,7 +13,12 @@ from scripts.dev.departments.tasks import transition_task
 def run_stage(stage: str, task: Dict[str, Any], files: List[str], focused_cmd: Optional[str], regression_cmds: List[str]) -> Tuple[bool, int, str]:
     task_id = task["task_id"]
     if stage == "validate-environment":
-        code, out, err, _ = execute_command(task_id, "powershell -ExecutionPolicy Bypass -File scripts/dev/devctl.ps1 doctor")
+        cmd = (
+            "powershell -ExecutionPolicy Bypass -File scripts/dev/devctl.ps1 doctor"
+            if shutil.which("powershell")
+            else f"{sys.executable} scripts/dev/run_harness.py doctor"
+        )
+        code, out, err, _ = execute_command(task_id, cmd)
         return code == 0, code, out + "\n" + err
     if stage == "inspect-task":
         return True, 0, f"Task {task_id} ready in status: {task['status']}"

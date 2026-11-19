@@ -9,6 +9,7 @@
 - [Groww read-only integration](./GROWW_READ_ONLY_INTEGRATION.md) — local credential/data boundary, account sync, execution timestamps, and chart markers.
 - [Local market history](./MARKET_HISTORY_ARCHIVE.md) — candle sources, bounded historical fetch, local storage, source limits, and unresolved licensing/access checks.
 - [Cloud-native architecture](./CLOUD_NATIVE_ARCHITECTURE.md) — target cloud data flow, verified provider limits, security boundaries, and migration gates.
+- [GitHub deployment and free backend](./GITHUB_DEPLOYMENT_FREE_TIER.md) — zero-cost deployment via GitHub Actions, Pages, Render, Koyeb, Hugging Face, and Turso.
 - [Architecture](./ARCHITECTURE.md) — current runtime and module boundaries.
 - [AI decision engine](./AI_DECISION_ENGINE.md) — actual SystemOne inputs, formulas, and limitations.
 - [Backtesting and paper trading](./BACKTESTING_FEEDBACK_LOOP.md) — implementation and validation requirements.

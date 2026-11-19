@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: smkd-backend
+    runtime: docker
+    dockerfilePath: stock-signal-bot/Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: SMKD_ALLOWED_ORIGINS
+        value: http://localhost:5173,https://dr-week.github.io
+    healthCheckPath: /health
