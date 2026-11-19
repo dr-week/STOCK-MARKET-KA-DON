@@ -243,3 +243,25 @@ Active issues, architectural constraints, and enhancement roadmaps are tracked t
 <div align="center">
   <sub>Copyright © 2026 <b>Danger Labs</b>. All rights reserved.</sub>
 </div>
+
+
+## Code quality, linting and CI
+
+Standards: Python 3.11, files kept to ≤150 lines per module (split by responsibility), no synthetic market data in production paths.
+
+```bash
+# Lint (ruff, config in ruff.toml)
+uvx ruff@0.8.6 check stock-signal-bot/backend/app scripts/dev
+
+# Backend tests
+cd stock-signal-bot/backend && python -m unittest discover -s app/tests -t .
+
+# Agent harness (doctor, duplicate/integrity checks, evaluation suite)
+python3 scripts/dev/run_harness.py doctor
+python3 scripts/dev/run_harness.py eval
+python3 -m unittest discover -s scripts/dev/tests
+```
+
+GitHub Actions ([ci.yml](.github/workflows/ci.yml)) runs lint, the 150-line module report, harness evaluation, docs checks and backend tests on every push and pull request. [deploy-backend.yml](.github/workflows/deploy-backend.yml) publishes the container to GHCR and [deploy-pages.yml](.github/workflows/deploy-pages.yml) publishes the docs/status site to GitHub Pages (set Settings → Pages → Source to "GitHub Actions"). Free-tier hosting options and limits: [docs/GITHUB_DEPLOYMENT_FREE_TIER.md](docs/GITHUB_DEPLOYMENT_FREE_TIER.md).
+
+Troubleshooting: if backend tests fail with `No module named 'app'`, run them from `stock-signal-bot/backend` with `-t .`; if `numpy` fails to install on Python 3.11, keep `requirements-lock.txt` pinned to `numpy==2.4.6`.
