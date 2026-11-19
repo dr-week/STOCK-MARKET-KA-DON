@@ -77,10 +77,14 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check out SMKD repository with submodule
+      - name: Check out SMKD repository
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
+
+      - name: Check out fast-framework
+        run: |
+          git clone --depth=1 https://github.com/dr-week/fast-framework.git fast-framework
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
