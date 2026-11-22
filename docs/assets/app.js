@@ -4,8 +4,17 @@ const statusEl = document.getElementById("healthOut");
 const scanBody = document.getElementById("scanBody");
 const paperOut = document.getElementById("paperOut");
 
-const savedUrl = localStorage.getItem(STORAGE_KEY);
-if (savedUrl) apiInput.value = savedUrl;
+function resolveInitialUrl() {
+  const param = new URLSearchParams(window.location.search).get("api");
+  if (param) return param.trim().replace(/\/+$/, "");
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) return saved;
+  if (window.SMKD_DEFAULT_API) return String(window.SMKD_DEFAULT_API).trim().replace(/\/+$/, "");
+  if (window.location.hostname.endsWith("github.io")) return "https://smkd-backend.onrender.com";
+  return "http://localhost:8000";
+}
+
+apiInput.value = resolveInitialUrl();
 
 function getBaseUrl() {
   const base = apiInput.value.trim().replace(/\/+$/, "");
@@ -82,12 +91,12 @@ async function connectAndLoad() {
     statusEl.innerHTML = '<span class="warn">Enter your backend API URL first.</span>';
     return;
   }
-  statusEl.textContent = `Connecting to ${base}/health ...`;
+  statusEl.textContent = `Connecting to ${base}/health (free-tier cold starts may take ~30s) ...`;
   try {
     const h = await fetchJson(base, "/health");
     statusEl.innerHTML = `<span class="ok">ONLINE</span> — ${esc(h.service)} v${esc(h.version)} (${esc(base)})`;
   } catch (err) {
-    statusEl.innerHTML = `<span class="err">UNREACHABLE</span> — ${esc(err.message)} (verify backend is running and SMKD_ALLOWED_ORIGINS allows this origin)`;
+    statusEl.innerHTML = `<span class="err">UNREACHABLE</span> — ${esc(err.message)} (if just deployed on Render free tier, wait ~30s and click Connect again)`;
     return;
   }
 
@@ -108,3 +117,4 @@ async function connectAndLoad() {
 }
 
 document.getElementById("checkBtn").addEventListener("click", connectAndLoad);
+window.addEventListener("DOMContentLoaded", connectAndLoad);

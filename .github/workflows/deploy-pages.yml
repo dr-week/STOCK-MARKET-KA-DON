@@ -30,10 +30,15 @@ jobs:
           enablement: true
 
       - name: Prepare Static Site Artifact
+        env:
+          SMKD_BACKEND_URL: ${{ vars.SMKD_BACKEND_URL }}
         run: |
-          mkdir -p _site
+          mkdir -p _site/assets
           cp -r docs/* _site/ || true
           cp README.md _site/index.md || true
+          if [ -n "$SMKD_BACKEND_URL" ]; then
+            python3 -c 'import json, os; print("window.SMKD_DEFAULT_API = " + json.dumps(os.environ["SMKD_BACKEND_URL"]) + ";")' > _site/assets/config.js
+          fi
           # Create a lightweight status/landing page if index.html is missing
           if [ ! -f _site/index.html ]; then
             cat << 'EOF' > _site/index.html
