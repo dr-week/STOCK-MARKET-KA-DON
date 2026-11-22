@@ -3,113 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stock Market Ka Don (SMKD) — Portal & Status</title>
-  <style>
-    :root { --bg:#0b1120; --card:#111a2e; --border:#24324d; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.55; }
-    .wrap { max-width:980px; margin:0 auto; padding:2rem 1.25rem 3.5rem; }
-    header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; margin-bottom:1.75rem; }
-    h1 { margin:0; font-size:1.75rem; color:var(--accent); }
-    .tag { display:inline-block; font-size:.75rem; font-weight:600; padding:.2rem .6rem; border-radius:999px; background:#0c4a6e; color:#bae6fd; margin-bottom:.4rem; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; margin-bottom:1.5rem; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; }
-    .card h2 { margin:0 0 .65rem; font-size:1.05rem; color:#f8fafc; }
-    p, li { color:var(--muted); font-size:.92rem; }
-    ul { margin:.4rem 0 0; padding-left:1.15rem; }
-    a { color:var(--accent); text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    .btn { display:inline-block; background:var(--accent); color:#082f49; font-weight:700; padding:.5rem .95rem; border-radius:8px; font-size:.88rem; border:none; cursor:pointer; }
-    .btn:hover { opacity:.92; text-decoration:none; }
-    .row { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem; }
-    input { flex:1; min-width:210px; background:#09101f; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:.5rem .7rem; font-family:monospace; font-size:.85rem; }
-    .status { margin-top:.75rem; padding:.55rem .75rem; border-radius:8px; font-size:.85rem; font-family:monospace; background:#09101f; border:1px solid var(--border); }
-    .ok { color:var(--ok); } .err { color:var(--err); } .warn { color:var(--warn); }
-    footer { margin-top:2rem; border-top:1px solid var(--border); padding-top:1rem; font-size:.82rem; color:var(--muted); }
-  </style>
+  <title>Stock Market Ka Don (SMKD) — Live Web Console</title>
+  <link rel="stylesheet" href="assets/app.css" />
 </head>
 <body>
   <div class="wrap">
     <header>
       <div>
-        <span class="tag">NSE Intraday Decision Support • Python 3.11 • Modular ≤150 LOC</span>
+        <span class="tag">NSE Intraday Research • Python 3.11 • Modular ≤150 LOC</span>
         <h1>Stock Market Ka Don (SMKD)</h1>
-        <p style="margin:.3rem 0 0;">Deterministic NSE technical scanner, risk sizing, paper-trading ledger, and AI agent harness.</p>
+        <p style="margin:.25rem 0 0;">Live NSE scanner, deterministic 11-point confluence scoring, risk sizing, and paper-trading ledger.</p>
       </div>
       <div class="row">
-        <a class="btn" href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub Repo</a>
-        <a class="btn" style="background:#1e293b;color:#e2e8f0;border:1px solid var(--border);" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/actions">CI Status</a>
+        <a class="btn btn-ok" href="https://render.com/deploy?repo=https://github.com/dr-week/STOCK-MARKET-KA-DON" target="_blank" rel="noopener">Deploy Free Backend (Render)</a>
+        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub Repo</a>
+        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/actions">CI Status</a>
       </div>
     </header>
 
-    <section class="card" style="margin-bottom:1.5rem;">
-      <h2>Backend Health &amp; Live Connectivity Check</h2>
-      <p>Enter your deployed backend URL (Render, Koyeb, Hugging Face Spaces, or local Docker) to query <code>/health</code> directly from your browser.</p>
+    <section class="card">
+      <h2>Connect Backend API</h2>
+      <p style="margin-top:0;">Enter your deployed SMKD backend URL (Render, Koyeb, Hugging Face Spaces, or local Docker) to load live NSE data.</p>
       <div class="row">
         <input id="apiUrl" type="url" value="http://localhost:8000" aria-label="Backend API base URL" />
-        <button class="btn" id="checkBtn" type="button">Check /health</button>
+        <button class="btn" id="checkBtn" type="button">Connect &amp; Refresh Live Data</button>
       </div>
-      <div class="status" id="healthOut">Status: idle — click "Check /health" to test your backend endpoint.</div>
+      <div class="status" id="healthOut">Status: idle — click "Connect &amp; Refresh Live Data" to query your backend.</div>
     </section>
 
     <section class="grid">
-      <div class="card">
-        <h2>Core Documentation</h2>
+      <div class="card" style="margin:0;"><div class="metric-label">NSE Session</div><div class="metric-val" id="mSession">—</div><div class="metric-sub" id="mSessionSub">Connect backend</div></div>
+      <div class="card" style="margin:0;"><div class="metric-label">Nifty 50</div><div class="metric-val" id="mNifty">—</div><div class="metric-sub" id="mNiftySub">Connect backend</div></div>
+      <div class="card" style="margin:0;"><div class="metric-label">India VIX</div><div class="metric-val" id="mVix">—</div><div class="metric-sub" id="mVixSub">Connect backend</div></div>
+      <div class="card" style="margin:0;"><div class="metric-label">Macro Bias</div><div class="metric-val" id="mBias">—</div><div class="metric-sub" id="mBiasSub">Connect backend</div></div>
+    </section>
+
+    <section class="card">
+      <h2>Live Intraday Scanner</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Symbol</th><th>Price</th><th>Change</th><th>Signal</th><th>Score</th><th>Levels</th><th>Net Viability</th></tr>
+          </thead>
+          <tbody id="scanBody">
+            <tr><td colspan="7">Not connected. No synthetic data is displayed.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Paper Trading Ledger Summary</h2>
+      <div class="status" id="paperOut">Connect backend to inspect live virtual paper P&amp;L and open positions.</div>
+    </section>
+
+    <section class="grid">
+      <div class="card" style="margin:0;">
+        <h2>Documentation</h2>
         <ul>
+          <li><a href="GITHUB_DEPLOYMENT_FREE_TIER.md">Free-Tier Backend Deployment Guide</a></li>
           <li><a href="ARCHITECTURE.md">Architecture Overview</a></li>
-          <li><a href="GITHUB_DEPLOYMENT_FREE_TIER.md">GitHub &amp; Free-Tier Backend Deployment</a></li>
-          <li><a href="PRODUCT_TECHNICAL_ROADMAP.md">Structured 4-Phase Roadmap</a></li>
-          <li><a href="AI_DECISION_ENGINE.md">AI Decision Engine &amp; Confluence Model</a></li>
-          <li><a href="PAPER_TRADE_WORKFLOW.md">Paper Trading &amp; Feedback Loop</a></li>
-          <li><a href="DATA_SPECIFICATION.md">Market Data Integrity Specification</a></li>
+          <li><a href="PRODUCT_TECHNICAL_ROADMAP.md">Product &amp; Technical Roadmap</a></li>
+          <li><a href="AI_DECISION_ENGINE.md">Confluence &amp; AI Decision Engine</a></li>
+          <li><a href="PAPER_TRADE_WORKFLOW.md">Paper Trading Workflow</a></li>
         </ul>
       </div>
-
-      <div class="card">
-        <h2>Engineering Standards &amp; CI</h2>
+      <div class="card" style="margin:0;">
+        <h2>Deployment &amp; Quality Guarantees</h2>
         <ul>
-          <li><strong>Modularity:</strong> All Python source modules enforced ≤150 LOC in CI.</li>
-          <li><strong>Linting:</strong> <code>ruff</code> static checks on every push and PR.</li>
-          <li><strong>Agent Harness:</strong> 6 automated evaluations + 22 dev unit tests.</li>
-          <li><strong>Market-Data Integrity:</strong> Zero synthetic price fallback in production paths.</li>
-          <li><strong>Container Image:</strong> Published to GHCR on every <code>main</code> push.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h2>Free-Tier Deployment Targets</h2>
-        <ul>
-          <li><strong>Frontend / Docs:</strong> GitHub Pages (automated via <code>deploy-pages.yml</code>).</li>
-          <li><strong>Backend API:</strong> Render (<code>render.yaml</code>), Koyeb, or HF Spaces via GHCR Docker image.</li>
-          <li><strong>Database:</strong> Embedded SQLite (local/volume) or Turso / Neon free tier.</li>
-          <li><strong>Local Run:</strong> <code>docker compose up --build</code></li>
+          <li><strong>GitHub Pages:</strong> Auto-deployed on every push to <code>main</code>.</li>
+          <li><strong>Container:</strong> <code>ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest</code>.</li>
+          <li><strong>CI Gates:</strong> <code>ruff</code> lint, ≤150-LOC limit, 6-eval Agent Harness, 117 backend tests.</li>
+          <li><strong>Data Integrity:</strong> Zero fabricated market prices or synthetic fallbacks.</li>
         </ul>
       </div>
     </section>
 
     <footer>
-      SMKD is a research and paper-trading decision-support workstation. It does not place live broker orders or provide financial advice.
+      SMKD is an experimental NSE research and paper-trading tool by Danger Labs. It does not place live broker orders or provide financial advice.
     </footer>
   </div>
-
-  <script>
-    const out = document.getElementById("healthOut");
-    document.getElementById("checkBtn").addEventListener("click", async () => {
-      const base = document.getElementById("apiUrl").value.trim().replace(/\/+$/, "");
-      if (!base) { out.innerHTML = '<span class="warn">Enter a valid backend URL first.</span>'; return; }
-      out.textContent = "Checking " + base + "/health ...";
-      try {
-        const res = await fetch(base + "/health", { mode: "cors" });
-        const text = await res.text();
-        if (res.ok) {
-          out.innerHTML = '<span class="ok">ONLINE (' + res.status + ')</span> — ' + text.slice(0, 180);
-        } else {
-          out.innerHTML = '<span class="warn">HTTP ' + res.status + '</span> — ' + text.slice(0, 180);
-        }
-      } catch (err) {
-        out.innerHTML = '<span class="err">UNREACHABLE</span> — ' + String(err) + ' (verify backend is running and SMKD_ALLOWED_ORIGINS permits this origin)';
-      }
-    });
-  </script>
+  <script src="assets/app.js"></script>
 </body>
 </html>
