@@ -3,6 +3,7 @@ services:
     name: smkd-backend
     runtime: docker
     dockerfilePath: stock-signal-bot/Dockerfile
+    dockerContext: .
     plan: free
     region: oregon
     envVars:
