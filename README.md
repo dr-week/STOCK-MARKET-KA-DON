@@ -226,13 +226,18 @@ For the full route list, use `/docs` while the backend is running; routes can ch
 
 ## Deployment & GitHub Pages
 
-- **Project Portal (GitHub Pages):** Published automatically from [docs/index.html](docs/index.html) and `docs/` via [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) (ensure **Settings → Pages → Source** is set to **GitHub Actions**). Includes documentation links and a live browser `/health` connectivity checker for your backend URL.
-- **Container Image (GHCR):** Built and published on every push to `main` via [.github/workflows/deploy-backend.yml](.github/workflows/deploy-backend.yml) using [stock-signal-bot/Dockerfile](stock-signal-bot/Dockerfile) (`ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest`).
-- **Local Docker:**
+- **Live Web Console (GitHub Pages):** **[https://dr-week.github.io/STOCK-MARKET-KA-DON/](https://dr-week.github.io/STOCK-MARKET-KA-DON/)** — auto-deployed from [docs/index.html](docs/index.html) and `docs/` via [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml). Connects directly to your local or cloud SMKD backend for live NSE Overview (Session, Nifty 50, India VIX), Intraday Scanner, and Paper P&L.
+- **One-Click Free Backend (Render):** **[Deploy to Render](https://render.com/deploy?repo=https://github.com/dr-week/STOCK-MARKET-KA-DON)** using [render.yaml](render.yaml) (pre-configured with `SMKD_ALLOWED_ORIGINS` for `https://dr-week.github.io` and `/health` checks).
+- **Container Image (GHCR):** Built and published on every push to `main` via [.github/workflows/deploy-backend.yml](.github/workflows/deploy-backend.yml) using [stock-signal-bot/Dockerfile](stock-signal-bot/Dockerfile):
+  ```bash
+  docker pull ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest
+  docker run -p 8000:8000 -e PORT=8000 -e HOST=0.0.0.0 ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest
+  ```
+- **Local Docker Compose:**
   ```bash
   docker compose up --build
   ```
-- **Free-Tier Backend & Database Hosting:** Ready for one-click Render deployment via [render.yaml](render.yaml), or Koyeb / Hugging Face Spaces via the GHCR container image. Set `SMKD_ALLOWED_ORIGINS` to your GitHub Pages origin. Full comparison of free-tier limits, cold-start behavior, and Turso/Neon database options: [docs/GITHUB_DEPLOYMENT_FREE_TIER.md](docs/GITHUB_DEPLOYMENT_FREE_TIER.md).
+- **Free-Tier Architecture & Limits:** Full comparison of Render, Koyeb, Hugging Face Spaces, and Turso/Neon free tiers: [docs/GITHUB_DEPLOYMENT_FREE_TIER.md](docs/GITHUB_DEPLOYMENT_FREE_TIER.md).
 
 ---
 
@@ -280,16 +285,22 @@ python3 -m unittest discover -s scripts/dev/tests
 ### Troubleshooting
 - **`ModuleNotFoundError: No module named 'app'`:** Run backend tests from `stock-signal-bot/backend` with `-t .` (or set `PYTHONPATH=stock-signal-bot/backend`).
 - **Python 3.11 + NumPy install error:** Keep [requirements-lock.txt](stock-signal-bot/backend/requirements-lock.txt) pinned to `numpy==2.4.6` (`numpy>=2.5` dropped Python 3.11).
-- **CORS blocked from GitHub Pages portal:** Set `SMKD_ALLOWED_ORIGINS` on your backend host (e.g., `https://<user>.github.io`).
+- **CORS blocked from GitHub Pages portal:** `https://dr-week.github.io` is allowed by default; for custom domains set `SMKD_ALLOWED_ORIGINS`.
 - **Harness `No module named 'yaml'`:** Install `pyyaml` (`pip install pyyaml==6.0.2`).
 
 ---
 
 ## Roadmap & status
 
-- **Completed:** Modular ≤150-LOC backend & tooling refactor, cross-platform AI Agent Harness (`scripts/dev/harness/`), `ruff` static analysis + CI quality gates, GHCR container packaging, Render blueprint (`render.yaml`), GitHub Pages portal (`docs/index.html`), and Quantum SDK feasibility review (kept strictly offline; infeasible for live intraday paths).
-- **Next priorities:** Live free-tier backend deployment (Render/Koyeb) with CORS linked to GitHub Pages, optional Turso/Neon persistence for stateless free-tier hosts, and restoring frontend UI CI once `fast-framework` package paths are aligned.
-- See [docs/PRODUCT_TECHNICAL_ROADMAP.md](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [docs/CLOUD_NATIVE_ARCHITECTURE.md](docs/CLOUD_NATIVE_ARCHITECTURE.md) for full phase details.
+| Phase | Focus | Status |
+|:---|:---|:---|
+| **Foundation** | Modular ≤150-LOC backend & tooling, AI Agent Harness, `ruff` CI gates, GHCR container, Render blueprint, live `^INDIAVIX` & honest fallbacks, GitHub Pages live web console, Quantum SDK feasibility review (offline-only) | **Completed** |
+| **Phase 1 — Cloud Persistence** | Optional Turso/libSQL or Neon remote storage adapter (`SMKD_DB_URL`) for stateless free-tier hosts + cold-start warm-up UX | **Next** |
+| **Phase 2 — Real-Time Fidelity** | Multi-provider failover (official broker quotes + Yahoo), NSE trading holiday calendar, SSE live streaming (`/api/stream/scan`) | **Planned** |
+| **Phase 3 — Quant Rigor** | Walk-forward out-of-sample backtesting with full Groww friction, per-rule ablation report, VIX regime-aware risk gating | **Planned** |
+| **Phase 4 — Alerts & UI Ownership** | Telegram/Discord/webhook candidate alerts, standalone frontend CI decoupled from drifted external submodules, `/api/system/metrics` | **Planned** |
+
+See [docs/PRODUCT_TECHNICAL_ROADMAP.md](docs/PRODUCT_TECHNICAL_ROADMAP.md) and [docs/CLOUD_NATIVE_ARCHITECTURE.md](docs/CLOUD_NATIVE_ARCHITECTURE.md) for detailed technical specifications.
 
 ---
 
@@ -298,7 +309,7 @@ python3 -m unittest discover -s scripts/dev/tests
 Active issues, architectural constraints, and enhancement roadmaps are tracked transparently in the **[GitHub Issues tab](https://github.com/dr-week/STOCK-MARKET-KA-DON/issues)**:
 
 1. **Unofficial market data:** Yahoo Finance is not an exchange-certified real-time feed. Fresh fetch time does not prove quote freshness; stale/delayed classification and provider availability remain limitations.
-2. **Fallback context and fundamentals:** some market-context and company metrics use fixed/static defaults; review data-source labels and the roadmap before interpreting them as live observations.
+2. **Static fundamentals:** Company fundamental metrics (P/E, ROE, D/E) use a static reference table; market overview metrics (Nifty 50, India VIX, sector strengths) are fetched live and explicitly marked `unavailable` if the upstream provider fails.
 3. **Research limits:** short-window backtests use simplified assumptions and incomplete point-in-time context. They do not establish profitability or future performance.
 4. **Paper-only trading:** automatic paper positions are simulated locally. No broker order placement, real fills, fees, or slippage are modeled by the paper ledger.
 
