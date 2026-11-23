@@ -1,0 +1,77 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag to attach APK (e.g. v2.0.0)'
+        required: true
+        default: 'v2.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-apk:
+    name: Build Installable Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Capacitor dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Inject default backend URL (if configured)
+        if: vars.SMKD_BACKEND_URL != ''
+        env:
+          SMKD_BACKEND_URL: ${{ vars.SMKD_BACKEND_URL }}
+        run: |
+          python3 -c 'import json, os; print("window.SMKD_DEFAULT_API = " + json.dumps(os.environ["SMKD_BACKEND_URL"]) + ";")' > docs/assets/config.js
+
+      - name: Sync web console into Android project
+        run: npx cap sync android
+
+      - name: Build installable Android APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Rename APK for release
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk "SMKD-${TAG}-android.apk"
+          ls -lh "SMKD-${TAG}-android.apk"
+
+      - name: Upload APK to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+        run: |
+          APK="SMKD-${TAG}-android.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+          else
+            gh release create "$TAG" "$APK" \
+              --title "Stock Market Ka Don $TAG" \
+              --notes "Installable Android APK for Stock Market Ka Don ($TAG). Connects to your Render cloud backend or local LAN backend."
+          fi

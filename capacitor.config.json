@@ -1,5 +1,9 @@
 {
   "appId": "com.disha.donengine",
-  "appName": "don-engine",
-  "webDir": "fast-framework/packages/stock-bot-ui/dist"
+  "appName": "Stock Market Ka Don",
+  "webDir": "docs",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
 }

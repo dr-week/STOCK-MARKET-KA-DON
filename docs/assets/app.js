@@ -10,7 +10,9 @@ function resolveInitialUrl() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) return saved;
   if (window.SMKD_DEFAULT_API) return String(window.SMKD_DEFAULT_API).trim().replace(/\/+$/, "");
-  if (window.location.hostname.endsWith("github.io")) return "https://smkd-backend.onrender.com";
+  const isCapacitor = Boolean(window.Capacitor?.isNativePlatform?.()) ||
+    (window.location.protocol === "https:" && window.location.hostname === "localhost");
+  if (window.location.hostname.endsWith("github.io") || isCapacitor) return "https://smkd-backend.onrender.com";
   return "http://localhost:8000";
 }
 
