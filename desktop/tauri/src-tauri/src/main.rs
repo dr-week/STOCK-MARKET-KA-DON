@@ -10,6 +10,8 @@ use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, RunEvent};
 
+mod updater;
+
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
