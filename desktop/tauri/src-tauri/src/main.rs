@@ -301,6 +301,13 @@ fn main() {
     }
 
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .invoke_handler(tauri::generate_handler![
+            updater::get_app_info,
+            updater::check_for_update,
+            updater::install_update
+        ])
         .manage(BackendProcess(Mutex::new(None)))
         .setup(move |app| {
             let app_handle = app.handle().clone();

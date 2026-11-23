@@ -1,0 +1,78 @@
+name: Build & Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v2.0.0)'
+        required: true
+        default: 'v2.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    name: Build Lightweight Windows NSIS Installer
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/tauri/src-tauri
+
+      - name: Install Tauri CLI dependencies
+        working-directory: desktop/tauri
+        run: npm ci
+
+      - name: Inject Updater Public Key (if configured)
+        if: vars.TAURI_SIGNING_PUBLIC_KEY != ''
+        env:
+          TAURI_PUBKEY: ${{ vars.TAURI_SIGNING_PUBLIC_KEY }}
+        shell: pwsh
+        run: |
+          $confPath = "desktop/tauri/src-tauri/tauri.conf.json"
+          $json = Get-Content $confPath -Raw | ConvertFrom-Json
+          $json.plugins.updater.pubkey = $env:TAURI_PUBKEY
+          $json | ConvertTo-Json -Depth 12 | Set-Content $confPath -Encoding UTF8
+
+      - name: Build NSIS Installer & Publish GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: desktop/tauri
+          tagName: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+          releaseName: "Stock Market Ka Don ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}"
+          releaseBody: |
+            Lightweight Windows NSIS installer for **Stock Market Ka Don (SMKD)**.
+            - Install anywhere (custom install folder picker via `installMode: both`)
+            - Launch directly after installation
+            - Auto-update & manual check via **Settings → About Software**
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true

@@ -1,4 +1,4 @@
-"""Stage backend source and the pinned runtime lock for Tauri packaging."""
+"""Stage backend source, pinned lockfile, and web console for Tauri packaging."""
 
 from __future__ import annotations
 
@@ -6,30 +6,54 @@ import shutil
 from pathlib import Path
 
 APP_ROOT = Path(__file__).resolve().parents[3]
-SOURCE = APP_ROOT / "stock-signal-bot" / "backend"
-DESTINATION = Path(__file__).resolve().parents[1] / "bundle" / "backend"
+TAURI_ROOT = Path(__file__).resolve().parents[1]
+BACKEND_SRC = APP_ROOT / "stock-signal-bot" / "backend"
+BACKEND_DST = TAURI_ROOT / "bundle" / "backend"
+DOCS_SRC = APP_ROOT / "docs"
+FRONTEND_DST = TAURI_ROOT / "bundle" / "frontend"
 
 
 def ignore_backend_files(directory: str, names: list[str]) -> set[str]:
-    ignored = {
+    return {
         name
         for name in names
         if name in {"tests", "__pycache__", ".pytest_cache", "data", "backups"}
         or name.endswith((".pyc", ".db", ".db-shm", ".db-wal", ".log", ".gz"))
     }
-    return ignored
+
+
+def stage_backend() -> None:
+    if not (BACKEND_SRC / "app" / "main.py").is_file():
+        raise SystemExit(f"Backend source not found: {BACKEND_SRC}")
+    if not (BACKEND_SRC / "requirements-lock.txt").is_file():
+        raise SystemExit(f"Pinned backend lock not found: {BACKEND_SRC / 'requirements-lock.txt'}")
+    shutil.rmtree(BACKEND_DST, ignore_errors=True)
+    BACKEND_DST.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(BACKEND_SRC / "app", BACKEND_DST / "app", ignore=ignore_backend_files)
+    shutil.copy2(BACKEND_SRC / "requirements-lock.txt", BACKEND_DST / "requirements-lock.txt")
+    print(f"Staged backend runtime at {BACKEND_DST}")
+
+
+def stage_frontend() -> None:
+    shutil.rmtree(FRONTEND_DST, ignore_errors=True)
+    FRONTEND_DST.mkdir(parents=True, exist_ok=True)
+    for rel in ["index.html", "assets"]:
+        src = DOCS_SRC / rel
+        dst = FRONTEND_DST / rel
+        if src.is_dir():
+            shutil.copytree(src, dst)
+        elif src.is_file():
+            shutil.copy2(src, dst)
+    shutil.copy2(TAURI_ROOT / "splash.html", FRONTEND_DST / "splash.html")
+    logo = TAURI_ROOT / "logos" / "SMKD_LOGO.jpg"
+    if logo.is_file():
+        shutil.copy2(logo, FRONTEND_DST / "SMKD_LOGO.jpg")
+    print(f"Staged desktop frontend at {FRONTEND_DST}")
 
 
 def main() -> None:
-    if not (SOURCE / "app" / "main.py").is_file():
-        raise SystemExit(f"Backend source not found: {SOURCE}")
-    if not (SOURCE / "requirements-lock.txt").is_file():
-        raise SystemExit(f"Pinned backend lock not found: {SOURCE / 'requirements-lock.txt'}")
-    shutil.rmtree(DESTINATION, ignore_errors=True)
-    DESTINATION.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(SOURCE / "app", DESTINATION / "app", ignore=ignore_backend_files)
-    shutil.copy2(SOURCE / "requirements-lock.txt", DESTINATION / "requirements-lock.txt")
-    print(f"Staged backend runtime at {DESTINATION}")
+    stage_backend()
+    stage_frontend()
 
 
 if __name__ == "__main__":

@@ -8,6 +8,10 @@
 </head>
 <body>
   <div class="wrap">
+    <div class="banner" id="updateBanner">
+      <span id="bannerText">A new version of SMKD is available.</span>
+      <button class="btn" id="bannerOpenBtn" type="button">View Update</button>
+    </div>
     <header>
       <div>
         <span class="tag">NSE Intraday Research • Python 3.11 • Modular ≤150 LOC</span>
@@ -15,9 +19,10 @@
         <p style="margin:.25rem 0 0;">Live NSE scanner, deterministic 11-point confluence scoring, risk sizing, and paper-trading ledger.</p>
       </div>
       <div class="row">
+        <button class="btn btn-sec" id="openAboutBtn" type="button">Settings / About</button>
         <a class="btn btn-ok" href="https://render.com/deploy?repo=https://github.com/dr-week/STOCK-MARKET-KA-DON" target="_blank" rel="noopener">Deploy Free Backend (Render)</a>
+        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases/latest" target="_blank" rel="noopener">Windows Installer</a>
         <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub Repo</a>
-        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/actions">CI Status</a>
       </div>
     </header>
 
@@ -83,7 +88,35 @@
       SMKD is an experimental NSE research and paper-trading tool by Danger Labs. It does not place live broker orders or provide financial advice.
     </footer>
   </div>
+
+  <div class="modal-bg" id="aboutModal" role="dialog" aria-modal="true" aria-label="Settings and About Software">
+    <div class="modal">
+      <div class="row" style="justify-content:space-between;">
+        <h2 style="margin:0;">Settings &rarr; About Software</h2>
+        <button class="btn btn-sec" id="closeAboutBtn" type="button">Close</button>
+      </div>
+      <div class="kv">
+        <span>Software</span><strong>Stock Market Ka Don (SMKD)</strong>
+        <span>Version</span><strong id="aboutVersion">v2.0.0</strong>
+        <span>Runtime</span><span id="aboutRuntime">Detecting...</span>
+        <span>Install Location</span><span id="aboutInstallDir">—</span>
+        <span>Update Source</span><a href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases" target="_blank" rel="noopener">GitHub Releases</a>
+      </div>
+      <label class="row" style="font-size:.86rem;cursor:pointer;margin:.6rem 0;">
+        <input id="autoUpdateToggle" type="checkbox" checked style="flex:0;min-width:auto;" />
+        <span>Automatically check for GitHub updates on startup</span>
+      </label>
+      <div class="row" style="margin-top:.75rem;">
+        <button class="btn" id="manualCheckBtn" type="button">Check for Updates</button>
+        <button class="btn btn-ok" id="installUpdateBtn" type="button" style="display:none;">Download &amp; Install Update</button>
+        <a class="btn btn-sec" id="downloadReleaseLink" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases/latest" target="_blank" rel="noopener" style="display:none;">Download Installer (.exe)</a>
+      </div>
+      <div class="status" id="aboutUpdateStatus">Click "Check for Updates" to check GitHub Releases.</div>
+    </div>
+  </div>
+
   <script src="assets/config.js"></script>
   <script src="assets/app.js"></script>
+  <script src="assets/about_updater.js"></script>
 </body>
 </html>
