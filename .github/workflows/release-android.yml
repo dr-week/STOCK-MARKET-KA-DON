@@ -47,7 +47,9 @@ jobs:
           python3 -c 'import json, os; print("window.SMKD_DEFAULT_API = " + json.dumps(os.environ["SMKD_BACKEND_URL"]) + ";")' > docs/assets/config.js
 
       - name: Sync web console into Android project
-        run: npx cap sync android
+        run: |
+          cp docs/app.html docs/index.html
+          npx cap sync android
 
       - name: Build installable Android APK
         working-directory: android

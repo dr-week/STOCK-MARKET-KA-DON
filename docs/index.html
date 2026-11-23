@@ -3,120 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stock Market Ka Don (SMKD) — Live Web Console</title>
-  <link rel="stylesheet" href="assets/app.css" />
+  <title>Stock Market Ka Don — Precision NSE Market Intelligence</title>
+  <link rel="stylesheet" href="assets/site.css" />
 </head>
 <body>
-  <div class="wrap">
-    <div class="banner" id="updateBanner">
-      <span id="bannerText">A new version of SMKD is available.</span>
-      <button class="btn" id="bannerOpenBtn" type="button">View Update</button>
+  <nav>
+    <div class="container nav-inner">
+      <a class="brand" href="index.html"><span class="brand-dot"></span><span>SMKD</span></a>
+      <div class="nav-links">
+        <a class="hide-sm" href="#features">Features</a>
+        <a class="hide-sm" href="app.html">Live Console</a>
+        <a class="hide-sm" href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub</a>
+        <a class="btn btn-primary btn-sm" href="download.html">Get Started Now</a>
+      </div>
     </div>
-    <header>
-      <div>
-        <span class="tag">NSE Intraday Research • Python 3.11 • Modular ≤150 LOC</span>
-        <h1>Stock Market Ka Don (SMKD)</h1>
-        <p style="margin:.25rem 0 0;">Live NSE scanner, deterministic 11-point confluence scoring, risk sizing, and paper-trading ledger.</p>
-      </div>
-      <div class="row">
-        <button class="btn btn-sec" id="openAboutBtn" type="button">Settings / About</button>
-        <a class="btn btn-ok" href="https://render.com/deploy?repo=https://github.com/dr-week/STOCK-MARKET-KA-DON" target="_blank" rel="noopener">Deploy Free Backend (Render)</a>
-        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases/latest" target="_blank" rel="noopener">Windows Installer</a>
-        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub Repo</a>
-      </div>
-    </header>
+  </nav>
 
-    <section class="card">
-      <h2>Connect Backend API</h2>
-      <p style="margin-top:0;">Enter your deployed SMKD backend URL (Render, Koyeb, Hugging Face Spaces, or local Docker) to load live NSE data.</p>
-      <div class="row">
-        <input id="apiUrl" type="url" value="http://localhost:8000" aria-label="Backend API base URL" />
-        <button class="btn" id="checkBtn" type="button">Connect &amp; Refresh Live Data</button>
+  <main class="container">
+    <section class="hero">
+      <div class="pill">v2.0.0 Released &bull; Windows Installer &amp; Android APK Ready</div>
+      <h1><span class="grad">Precision NSE Market Intelligence,</span> Built for Speed.</h1>
+      <p class="lead">
+        A lightweight, deterministic intraday research workstation for Indian equities—combining 11-point technical confluence, live India VIX regimes, net-after-cost risk sizing, and automated paper trading.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="download.html">Get Started Now &rarr;</a>
+        <a class="btn btn-ghost" href="app.html">Open Live Web Console</a>
       </div>
-      <div class="status" id="healthOut">Status: idle — click "Connect &amp; Refresh Live Data" to query your backend.</div>
-    </section>
 
-    <section class="grid">
-      <div class="card" style="margin:0;"><div class="metric-label">NSE Session</div><div class="metric-val" id="mSession">—</div><div class="metric-sub" id="mSessionSub">Connect backend</div></div>
-      <div class="card" style="margin:0;"><div class="metric-label">Nifty 50</div><div class="metric-val" id="mNifty">—</div><div class="metric-sub" id="mNiftySub">Connect backend</div></div>
-      <div class="card" style="margin:0;"><div class="metric-label">India VIX</div><div class="metric-val" id="mVix">—</div><div class="metric-sub" id="mVixSub">Connect backend</div></div>
-      <div class="card" style="margin:0;"><div class="metric-label">Macro Bias</div><div class="metric-val" id="mBias">—</div><div class="metric-sub" id="mBiasSub">Connect backend</div></div>
-    </section>
-
-    <section class="card">
-      <h2>Live Intraday Scanner</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Symbol</th><th>Price</th><th>Change</th><th>Signal</th><th>Score</th><th>Levels</th><th>Net Viability</th></tr>
-          </thead>
-          <tbody id="scanBody">
-            <tr><td colspan="7">Not connected. No synthetic data is displayed.</td></tr>
-          </tbody>
-        </table>
+      <div class="visual-frame" aria-label="SMKD terminal preview graphic">
+        <svg viewBox="0 0 900 320" width="100%" style="display:block;" xmlns="http://www.w3.org/2000/svg">
+          <rect width="900" height="320" fill="#0b1120"/>
+          <rect width="900" height="36" fill="#0f172a"/>
+          <circle cx="20" cy="18" r="5" fill="#ef4444"/><circle cx="38" cy="18" r="5" fill="#f59e0b"/><circle cx="56" cy="18" r="5" fill="#22c55e"/>
+          <text x="84" y="22" fill="#94a3b8" font-family="monospace" font-size="12">SMKD Workstation v2.0.0 — NSE Intraday Engine</text>
+          <rect x="24" y="54" width="196" height="62" rx="10" fill="#0f172a" stroke="#1e293b"/>
+          <text x="38" y="76" fill="#94a3b8" font-family="sans-serif" font-size="11">NIFTY 50</text>
+          <text x="38" y="102" fill="#22c55e" font-family="sans-serif" font-size="18" font-weight="700">BULLISH &bull; LIVE</text>
+          <rect x="236" y="54" width="196" height="62" rx="10" fill="#0f172a" stroke="#1e293b"/>
+          <text x="250" y="76" fill="#94a3b8" font-family="sans-serif" font-size="11">INDIA VIX</text>
+          <text x="250" y="102" fill="#38bdf8" font-family="sans-serif" font-size="18" font-weight="700">OPTIMAL REGIME</text>
+          <rect x="448" y="54" width="204" height="62" rx="10" fill="#0f172a" stroke="#1e293b"/>
+          <text x="462" y="76" fill="#94a3b8" font-family="sans-serif" font-size="11">CONFLUENCE MODEL</text>
+          <text x="462" y="102" fill="#f1f5f9" font-family="sans-serif" font-size="18" font-weight="700">11-Point Rules</text>
+          <rect x="668" y="54" width="208" height="62" rx="10" fill="#0f172a" stroke="#1e293b"/>
+          <text x="682" y="76" fill="#94a3b8" font-family="sans-serif" font-size="11">RISK GATE</text>
+          <text x="682" y="102" fill="#22c55e" font-family="sans-serif" font-size="18" font-weight="700">1:2 R:R + Friction</text>
+          <rect x="24" y="132" width="852" height="164" rx="12" fill="#080d1a" stroke="#1e293b"/>
+          <path d="M56 254 L130 236 L205 244 L280 206 L355 216 L430 184 L505 192 L580 162 L655 174 L730 150 L830 144" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+          <path d="M56 266 L205 256 L355 234 L505 214 L655 196 L830 176" fill="none" stroke="#22c55e" stroke-width="1.6" stroke-dasharray="5 5"/>
+          <g fill="#22c55e"><rect x="126" y="222" width="8" height="24" rx="2"/><rect x="276" y="194" width="8" height="26" rx="2"/><rect x="426" y="172" width="8" height="28" rx="2"/><rect x="576" y="150" width="8" height="24" rx="2"/><rect x="726" y="140" width="8" height="22" rx="2"/></g>
+          <g fill="#ef4444"><rect x="201" y="232" width="8" height="18" rx="2"/><rect x="351" y="204" width="8" height="18" rx="2"/><rect x="501" y="180" width="8" height="18" rx="2"/><rect x="651" y="162" width="8" height="18" rx="2"/></g>
+          <text x="44" y="158" fill="#64748b" font-family="monospace" font-size="11">VWAP &bull; EMA 9/21 &bull; ADX/DI &bull; SUPPLY/DEMAND &bull; ZERO SYNTHETIC FALLBACKS</text>
+        </svg>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Paper Trading Ledger Summary</h2>
-      <div class="status" id="paperOut">Connect backend to inspect live virtual paper P&amp;L and open positions.</div>
-    </section>
-
-    <section class="grid">
-      <div class="card" style="margin:0;">
-        <h2>Documentation</h2>
-        <ul>
-          <li><a href="GITHUB_DEPLOYMENT_FREE_TIER.md">Free-Tier Backend Deployment Guide</a></li>
-          <li><a href="ARCHITECTURE.md">Architecture Overview</a></li>
-          <li><a href="PRODUCT_TECHNICAL_ROADMAP.md">Product &amp; Technical Roadmap</a></li>
-          <li><a href="AI_DECISION_ENGINE.md">Confluence &amp; AI Decision Engine</a></li>
-          <li><a href="PAPER_TRADE_WORKFLOW.md">Paper Trading Workflow</a></li>
-        </ul>
-      </div>
-      <div class="card" style="margin:0;">
-        <h2>Deployment &amp; Quality Guarantees</h2>
-        <ul>
-          <li><strong>GitHub Pages:</strong> Auto-deployed on every push to <code>main</code>.</li>
-          <li><strong>Container:</strong> <code>ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest</code>.</li>
-          <li><strong>CI Gates:</strong> <code>ruff</code> lint, ≤150-LOC limit, 6-eval Agent Harness, 117 backend tests.</li>
-          <li><strong>Data Integrity:</strong> Zero fabricated market prices or synthetic fallbacks.</li>
-        </ul>
-      </div>
-    </section>
-
-    <footer>
-      SMKD is an experimental NSE research and paper-trading tool by Danger Labs. It does not place live broker orders or provide financial advice.
-    </footer>
-  </div>
-
-  <div class="modal-bg" id="aboutModal" role="dialog" aria-modal="true" aria-label="Settings and About Software">
-    <div class="modal">
-      <div class="row" style="justify-content:space-between;">
-        <h2 style="margin:0;">Settings &rarr; About Software</h2>
-        <button class="btn btn-sec" id="closeAboutBtn" type="button">Close</button>
-      </div>
-      <div class="kv">
-        <span>Software</span><strong>Stock Market Ka Don (SMKD)</strong>
-        <span>Version</span><strong id="aboutVersion">v2.0.0</strong>
-        <span>Runtime</span><span id="aboutRuntime">Detecting...</span>
-        <span>Install Location</span><span id="aboutInstallDir">—</span>
-        <span>Update Source</span><a href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases" target="_blank" rel="noopener">GitHub Releases</a>
-      </div>
-      <label class="row" style="font-size:.86rem;cursor:pointer;margin:.6rem 0;">
-        <input id="autoUpdateToggle" type="checkbox" checked style="flex:0;min-width:auto;" />
-        <span>Automatically check for GitHub updates on startup</span>
-      </label>
-      <div class="row" style="margin-top:.75rem;">
-        <button class="btn" id="manualCheckBtn" type="button">Check for Updates</button>
-        <button class="btn btn-ok" id="installUpdateBtn" type="button" style="display:none;">Download &amp; Install Update</button>
-        <a class="btn btn-sec" id="downloadReleaseLink" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases/latest" target="_blank" rel="noopener" style="display:none;">Download Installer (.exe)</a>
-      </div>
-      <div class="status" id="aboutUpdateStatus">Click "Check for Updates" to check GitHub Releases.</div>
+    <div class="stats">
+      <div class="stat"><strong>3.1 MB</strong><span>Lightweight Windows Installer</span></div>
+      <div class="stat"><strong>5.7 MB</strong><span>Native Android APK</span></div>
+      <div class="stat"><strong>11 Points</strong><span>Deterministic Confluence</span></div>
+      <div class="stat"><strong>0% Fake Data</strong><span>Strict Live Provenance</span></div>
     </div>
-  </div>
 
-  <script src="assets/config.js"></script>
-  <script src="assets/app.js"></script>
-  <script src="assets/about_updater.js"></script>
+    <section id="features">
+      <div class="sec-head">
+        <h2>Everything you need for disciplined NSE analysis</h2>
+        <p>Minimalistic interface, deterministic math, and transparent data quality—built to run locally or in the cloud.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+          <h3>11-Point Intraday Scanner</h3>
+          <p>Scores market structure, supply &amp; demand zones, VWAP, EMA 9/21, RVOL, RSI/ADX momentum, Nifty bias, and multi-timeframe alignment.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <h3>Live Macro &amp; India VIX</h3>
+          <p>Tracks live Nifty 50 trend, real <code>^INDIAVIX</code> volatility regimes, and NSE sectoral heatmaps with explicit unavailable states.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3>Net-After-Friction Risk Sizing</h3>
+          <p>Enforces 1:2 minimum risk-reward, whole-share position sizing, and checks whether 5m movement covers Groww brokerage and taxes.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+          <h3>Automated Paper Trading</h3>
+          <p>Records risk-gated virtual positions in SQLite during NSE session hours with automatic target/stop exits and P&amp;L tracking.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg></div>
+          <h3>Backtesting &amp; Calibration</h3>
+          <p>Run short-window historical simulations using production rules and collect closed-trade outcomes for offline evaluation.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          <h3>Install Anywhere &amp; Auto-Update</h3>
+          <p>Choose any Windows install directory, launch immediately, and stay updated via GitHub Releases in <strong>Settings &rarr; About</strong>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="cta-box">
+      <h2>Ready to install Stock Market Ka Don?</h2>
+      <p>Download the lightweight Windows installer or Android APK—free, open-source, and ready in under a minute.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="download.html">Get Started Now &rarr;</a>
+        <a class="btn btn-ghost" href="app.html">Try Web Console</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div style="margin-bottom:.6rem;">
+        <a href="download.html">Download</a>
+        <a href="app.html">Live Console</a>
+        <a href="ARCHITECTURE.md">Architecture</a>
+        <a href="GITHUB_DEPLOYMENT_FREE_TIER.md">Free Hosting</a>
+        <a href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub</a>
+      </div>
+      <div>SMKD by Danger Labs &bull; Experimental NSE research &amp; paper-trading tool. Not financial advice.</div>
+    </div>
+  </footer>
 </body>
 </html>

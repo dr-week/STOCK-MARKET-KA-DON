@@ -37,13 +37,8 @@ def stage_backend() -> None:
 def stage_frontend() -> None:
     shutil.rmtree(FRONTEND_DST, ignore_errors=True)
     FRONTEND_DST.mkdir(parents=True, exist_ok=True)
-    for rel in ["index.html", "assets"]:
-        src = DOCS_SRC / rel
-        dst = FRONTEND_DST / rel
-        if src.is_dir():
-            shutil.copytree(src, dst)
-        elif src.is_file():
-            shutil.copy2(src, dst)
+    shutil.copy2(DOCS_SRC / "app.html", FRONTEND_DST / "index.html")
+    shutil.copytree(DOCS_SRC / "assets", FRONTEND_DST / "assets")
     shutil.copy2(TAURI_ROOT / "splash.html", FRONTEND_DST / "splash.html")
     logo = TAURI_ROOT / "logos" / "SMKD_LOGO.jpg"
     if logo.is_file():

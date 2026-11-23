@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Market Ka Don (SMKD) — Live Web Console</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner" id="updateBanner">
+      <span id="bannerText">A new version of SMKD is available.</span>
+      <button class="btn" id="bannerOpenBtn" type="button">View Update</button>
+    </div>
+    <header>
+      <div>
+        <span class="tag">NSE Intraday Research • Python 3.11 • Modular ≤150 LOC</span>
+        <h1>Stock Market Ka Don (SMKD)</h1>
+        <p style="margin:.25rem 0 0;">Live NSE scanner, deterministic 11-point confluence scoring, risk sizing, and paper-trading ledger.</p>
+      </div>
+      <div class="row">
+        <button class="btn btn-sec" id="openAboutBtn" type="button">Settings / About</button>
+        <a class="btn btn-ok" href="https://render.com/deploy?repo=https://github.com/dr-week/STOCK-MARKET-KA-DON" target="_blank" rel="noopener">Deploy Free Backend (Render)</a>
+        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases/latest" target="_blank" rel="noopener">Windows Installer</a>
+        <a class="btn btn-sec" href="https://github.com/dr-week/STOCK-MARKET-KA-DON">GitHub Repo</a>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Connect Backend API</h2>
+      <p style="margin-top:0;">Enter your deployed SMKD backend URL (Render, Koyeb, Hugging Face Spaces, or local Docker) to load live NSE data.</p>
+      <div class="row">
+        <input id="apiUrl" type="url" value="http://localhost:8000" aria-label="Backend API base URL" />
+        <button class="btn" id="checkBtn" type="button">Connect &amp; Refresh Live Data</button>
+      </div>
+      <div class="status" id="healthOut">Status: idle — click "Connect &amp; Refresh Live Data" to query your backend.</div>
+    </section>
+
+    <section class="grid">
+      <div class="card" style="margin:0;"><div class="metric-label">NSE Session</div><div class="metric-val" id="mSession">—</div><div class="metric-sub" id="mSessionSub">Connect backend</div></div>
+      <div class="card" style="margin:0;"><div class="metric-label">Nifty 50</div><div class="metric-val" id="mNifty">—</div><div class="metric-sub" id="mNiftySub">Connect backend</div></div>
+      <div class="card" style="margin:0;"><div class="metric-label">India VIX</div><div class="metric-val" id="mVix">—</div><div class="metric-sub" id="mVixSub">Connect backend</div></div>
+      <div class="card" style="margin:0;"><div class="metric-label">Macro Bias</div><div class="metric-val" id="mBias">—</div><div class="metric-sub" id="mBiasSub">Connect backend</div></div>
+    </section>
+
+    <section class="card">
+      <h2>Live Intraday Scanner</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Symbol</th><th>Price</th><th>Change</th><th>Signal</th><th>Score</th><th>Levels</th><th>Net Viability</th></tr>
+          </thead>
+          <tbody id="scanBody">
+            <tr><td colspan="7">Not connected. No synthetic data is displayed.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Paper Trading Ledger Summary</h2>
+      <div class="status" id="paperOut">Connect backend to inspect live virtual paper P&amp;L and open positions.</div>
+    </section>
+
+    <section class="grid">
+      <div class="card" style="margin:0;">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="GITHUB_DEPLOYMENT_FREE_TIER.md">Free-Tier Backend Deployment Guide</a></li>
+          <li><a href="ARCHITECTURE.md">Architecture Overview</a></li>
+          <li><a href="PRODUCT_TECHNICAL_ROADMAP.md">Product &amp; Technical Roadmap</a></li>
+          <li><a href="AI_DECISION_ENGINE.md">Confluence &amp; AI Decision Engine</a></li>
+          <li><a href="PAPER_TRADE_WORKFLOW.md">Paper Trading Workflow</a></li>
+        </ul>
+      </div>
+      <div class="card" style="margin:0;">
+        <h2>Deployment &amp; Quality Guarantees</h2>
+        <ul>
+          <li><strong>GitHub Pages:</strong> Auto-deployed on every push to <code>main</code>.</li>
+          <li><strong>Container:</strong> <code>ghcr.io/dr-week/stock-market-ka-don/smkd-backend:latest</code>.</li>
+          <li><strong>CI Gates:</strong> <code>ruff</code> lint, ≤150-LOC limit, 6-eval Agent Harness, 117 backend tests.</li>
+          <li><strong>Data Integrity:</strong> Zero fabricated market prices or synthetic fallbacks.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      SMKD is an experimental NSE research and paper-trading tool by Danger Labs. It does not place live broker orders or provide financial advice.
+    </footer>
+  </div>
+
+  <div class="modal-bg" id="aboutModal" role="dialog" aria-modal="true" aria-label="Settings and About Software">
+    <div class="modal">
+      <div class="row" style="justify-content:space-between;">
+        <h2 style="margin:0;">Settings &rarr; About Software</h2>
+        <button class="btn btn-sec" id="closeAboutBtn" type="button">Close</button>
+      </div>
+      <div class="kv">
+        <span>Software</span><strong>Stock Market Ka Don (SMKD)</strong>
+        <span>Version</span><strong id="aboutVersion">v2.0.0</strong>
+        <span>Runtime</span><span id="aboutRuntime">Detecting...</span>
+        <span>Install Location</span><span id="aboutInstallDir">—</span>
+        <span>Update Source</span><a href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases" target="_blank" rel="noopener">GitHub Releases</a>
+      </div>
+      <label class="row" style="font-size:.86rem;cursor:pointer;margin:.6rem 0;">
+        <input id="autoUpdateToggle" type="checkbox" checked style="flex:0;min-width:auto;" />
+        <span>Automatically check for GitHub updates on startup</span>
+      </label>
+      <div class="row" style="margin-top:.75rem;">
+        <button class="btn" id="manualCheckBtn" type="button">Check for Updates</button>
+        <button class="btn btn-ok" id="installUpdateBtn" type="button" style="display:none;">Download &amp; Install Update</button>
+        <a class="btn btn-sec" id="downloadReleaseLink" href="https://github.com/dr-week/STOCK-MARKET-KA-DON/releases/latest" target="_blank" rel="noopener" style="display:none;">Download Installer (.exe)</a>
+      </div>
+      <div class="status" id="aboutUpdateStatus">Click "Check for Updates" to check GitHub Releases.</div>
+    </div>
+  </div>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/about_updater.js"></script>
+</body>
+</html>
