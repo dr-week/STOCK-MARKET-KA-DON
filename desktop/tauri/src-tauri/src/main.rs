@@ -304,9 +304,9 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
-            updater::get_app_info,
-            updater::check_for_update,
-            updater::install_update
+            crate::updater::get_app_info,
+            crate::updater::check_for_update,
+            crate::updater::install_update
         ])
         .manage(BackendProcess(Mutex::new(None)))
         .setup(move |app| {
