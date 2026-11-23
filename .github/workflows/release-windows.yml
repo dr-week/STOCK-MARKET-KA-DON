@@ -55,6 +55,7 @@ jobs:
         run: |
           $confPath = "desktop/tauri/src-tauri/tauri.conf.json"
           $json = Get-Content $confPath -Raw | ConvertFrom-Json
+          $json.bundle.createUpdaterArtifacts = $true
           $json.plugins.updater.pubkey = $env:TAURI_PUBKEY
           $json | ConvertTo-Json -Depth 12 | Set-Content $confPath -Encoding UTF8
 
